@@ -1,6 +1,9 @@
-# Plutus-bench
+<div align="center">
+<img alt="A person with the Cardano logo as face, lifting heavy weights" src="plutus-bench.png" width="240" />
+<h1>Plutus-Bench</h1>
+</div>
 
-A repository that lets Smart Contract languages compete with unified benchmarks.
+A repository that lets Smart Contract languages compete via unified benchmarks.
 
 
 ### Structure
@@ -15,3 +18,7 @@ Each subdirectoy contains one folder `impl` with subdirectories for each Smart C
 given specification, along with a bash script called `build.sh` that prints to stdout
 the content of a `script.cbor` file that contains the Smart Contract.
 The script may write to `.tmp` within each directory.
+
+## Running
+
+Each contract defines how to run its tests
