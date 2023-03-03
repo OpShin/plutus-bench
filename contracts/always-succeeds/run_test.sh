@@ -1,3 +1,3 @@
 #! /bin/bash
 
-bash "impl/$1/build.sh" | cargo run
+(cd "impl/$1" && bash build.sh) | cargo run

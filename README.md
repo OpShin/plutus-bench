@@ -16,8 +16,7 @@ and a number of test cases in the folder `src`, usually written with [naumachia]
 
 Each subdirectoy contains one folder `impl` with subdirectories for each Smart Contract language that implemented the
 given specification, along with a bash script called `build.sh` that prints to stdout
-the content of a `script.cbor` file that contains the Smart Contract.
-The script may write to `.tmp` within each directory.
+the content of a JSON description of the Smart Contract (compatible with the  `cardano-cli`, often denoted `x.plutus`).
 
 ## Running
 

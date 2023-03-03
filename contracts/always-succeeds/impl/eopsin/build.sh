@@ -2,11 +2,10 @@
 
 set -e
 
-mkdir -p .tmp
-python3.8 -m venv .tmp/venv
-source .tmp/venv/bin/activate
-pip install -r requirements.txt
+python3.8 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt -q
 
 
-eopsin build always_succeeds.py -o .tmp > /dev/null
-cat .tmp/script.plutus
+eopsin build always_succeeds.py > /dev/null
+cat always_succeeds/script.plutus
