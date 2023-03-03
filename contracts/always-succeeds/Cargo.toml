@@ -5,15 +5,9 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-uplc = {version = "0.0.29"}
 serde_json = "1.0"
 
 [dependencies.naumachia]
 git = "https://github.com/MitchTurner/naumachia"
 rev = "bcba54f290cf8a66ffeaebe0ca13b8753363fb95"
 
-[patch.crates-io]
-uplc = { version = "0.0.29", git = "https://github.com/aiken-lang/aiken.git", branch = "main"}
-aiken = { version = "0.0.29", git = "https://github.com/aiken-lang/aiken.git", branch = "main"}
-aiken-lang = { version = "0.0.29", git = "https://github.com/aiken-lang/aiken.git", branch = "main"}
-aiken-project = { version = "0.0.29", git = "https://github.com/aiken-lang/aiken.git", branch = "main"}

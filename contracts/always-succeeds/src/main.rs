@@ -1,13 +1,7 @@
-use naumachia::{scripts::raw_script::{BlueprintFile, PlutusScriptFile}, trireme_ledger_client::Network};
+use naumachia::{scripts::raw_script::PlutusScriptFile};
 use std::{
     io::{self, Read},
-    marker::PhantomData,
     str,
-};
-use uplc::{
-    ast::{DeBruijn, Name, NamedDeBruijn, Program, Term},
-    machine::cost_model::ExBudget,
-    parser,
 };
 
 use naumachia::scripts::raw_validator_script::RawPlutusValidator;
