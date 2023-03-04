@@ -6,7 +6,21 @@
 A repository that lets Smart Contract languages compete via unified benchmarks.
 
 
-### Structure
+## Structure
+
+```
+contracts/
+├── <contract name 1>/
+│   ├── impl/
+│   │   ├── <language name 1>
+│   │   │   └── make*
+│   │   ├── <language name 2>
+│   │   ...
+│   ├── run_test*
+│   └── run_all_tests*
+├── <contract name 2>/
+...
+```
 
 The `contracts` folder contains subdirectories, each representing a smart contract use case.
 Each use-case describes as precisely as possible what the corresponding contract is supposed to do.
