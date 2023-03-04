@@ -1,0 +1,5 @@
+#! /bin/bash
+
+set -e
+npm i -g @hyperionbt/helios-cli > /dev/null
+helios compile script.hl --optimize --output /dev/stdout
