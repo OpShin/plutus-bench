@@ -1,4 +1,4 @@
-use naumachia::{scripts::{raw_script::PlutusScriptFile, ExecutionCost}};
+use naumachia::{scripts::{raw_script::PlutusScriptFile, ExecutionCost, raw_validator_script::plutus_data::PlutusData}, trireme_ledger_client::cml_client::plutus_data_interop::PlutusDataInterop};
 use std::{
     io::{self, Read},
     str,
@@ -31,6 +31,9 @@ pub fn test_spend(script: RawPlutusValidator<(), ()>) -> Option<ExecutionCost> {
         .with_input(&vec![0], 0, &script_addr)
         .finish_input()
         .build_spend(&vec![1], 0);
+    let ctx_data: PlutusData = ctx.clone().into();
+    let ctx_json = serde_json::to_string(&ctx_data.to_plutus_data()).unwrap();
+    println!("{}", ctx_json);
     let cost = script.execute((), (), ctx).unwrap();
     return Some(cost)
 }

@@ -6,8 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 serde_json = "1.0"
+hex = "0.4.3"
+minicbor = "0.18.0"
 
 [dependencies.naumachia]
-git = "https://github.com/MitchTurner/naumachia"
-rev = "bcba54f290cf8a66ffeaebe0ca13b8753363fb95"
+git = "https://github.com/ImperatorLang/naumachia"
+rev = "f1a045e9f84a4cc0c395a3563539014a70259c44"
 
