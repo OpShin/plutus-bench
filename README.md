@@ -48,13 +48,13 @@ Example output can be found below
 ```bash
 $ cd contracts/always-succeeds
 $ ./bench eopsin
-pass,160,2045491,7702
+spend,pass,160,2045491,7702
 $ ./bench_all
-aiken,pass,15,517656,2001
-eopsin,pass,160,2045491,7702
-hebi,pass,28,713100,3200
-helios,pass,8,230100,1100
-uplc,pass,8,230100,1100
+aiken,spend,pass,15,517656,2001
+eopsin,spend,pass,160,2045491,7702
+hebi,spend,pass,28,713100,3200
+helios,spend,pass,8,230100,1100
+uplc,spend,pass,8,230100,1100
 ```
 
 Each subdirectoy contains one folder `impl` with subdirectories for each Smart Contract language that implemented the
@@ -77,17 +77,17 @@ To benchmark a specific contract, execute `bench <contract>`.
 
 ```bash
 $ bench always-succeeds
-aiken,pass,15,517656,2001
-eopsin,pass,160,2045491,7702
-hebi,pass,28,713100,3200
-helios,pass,8,230100,1100
-uplc,pass,8,230100,1100
+aiken,spend,pass,15,517656,2001
+eopsin,spend,pass,160,2045491,7702
+hebi,spend,pass,28,713100,3200
+helios,spend,pass,8,230100,1100
+uplc,spend,pass,8,230100,1100
 $ bench_all
-always_succeeds,aiken,pass,15,517656,2001
-always_succeeds,eopsin,pass,160,2045491,7702
-always_succeeds,hebi,pass,28,713100,3200
-always_succeeds,helios,pass,8,230100,1100
-always_succeeds,uplc,pass,8,230100,1100
-gift,eopsin,pass,160,2045491,7702
-gift,pluto,pass,8,230100,1100
+always-succeeds,aiken,spend,pass,15,517656,2001
+always-succeeds,eopsin,spend,pass,160,2045491,7702
+always-succeeds,hebi,spend,pass,28,713100,3200
+always-succeeds,helios,spend,pass,8,230100,1100
+always-succeeds,uplc,spend,pass,8,230100,1100
+gift,eopsin,spend,pass,160,2045491,7702
+gift,pluto,spend,pass,8,230100,1100
 ```

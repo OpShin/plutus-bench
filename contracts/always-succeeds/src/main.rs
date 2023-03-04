@@ -21,7 +21,7 @@ pub fn get_script() -> RawPlutusValidator<(), ()> {
     return RawPlutusValidator::new_v2(plutus_script).unwrap();
 }
 
-pub fn test_succeeds(script: RawPlutusValidator<(), ()>) -> Option<ExecutionCost> {
+pub fn test_spend(script: RawPlutusValidator<(), ()>) -> Option<ExecutionCost> {
     let owner = Address::from_bech32("addr_test1qpmtp5t0t5y6cqkaz7rfsyrx7mld77kpvksgkwm0p7en7qum7a589n30e80tclzrrnj8qr4qvzj6al0vpgtnmrkkksnqd8upj0").unwrap();
 
     let script_addr = script.address(0).unwrap();
@@ -39,8 +39,8 @@ fn main() {
     let script = get_script();
 
     let script_size = script.script_hex().unwrap().len() / 2;
-    let cost = test_succeeds(script).unwrap();
+    let cost = test_spend(script).unwrap();
     let cpu_steps = cost.cpu();
     let mem_steps = cost.mem();
-    println!("pass,{script_size},{cpu_steps},{mem_steps}");
+    println!("spend,pass,{script_size},{cpu_steps},{mem_steps}");
 }
