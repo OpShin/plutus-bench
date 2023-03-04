@@ -45,6 +45,8 @@ $ ./bench_all
 aiken,pass,15,517656,2001
 eopsin,pass,160,2045491,7702
 hebi,pass,28,713100,3200
+helios,pass,8,230100,1100
+uplc,pass,8,230100,1100
 ```
 
 Each subdirectoy contains one folder `impl` with subdirectories for each Smart Contract language that implemented the
@@ -67,8 +69,12 @@ $ bench always-succeeds
 aiken,pass,15,517656,2001
 eopsin,pass,160,2045491,7702
 hebi,pass,28,713100,3200
+helios,pass,8,230100,1100
+uplc,pass,8,230100,1100
 $ bench_all
-always-succeeds,aiken,pass,15,517656,2001
-always-succeeds,eopsin,pass,160,2045491,7702
-always-succeeds,hebi,pass,28,713100,3200
+always_succeeds,aiken,pass,15,517656,2001
+always_succeeds,eopsin,pass,160,2045491,7702
+always_succeeds,helios,pass,8,230100,1100
+gift,eopsin,pass,160,2045491,7702
+gift,pluto,pass,8,230100,1100
 ```
