@@ -16,6 +16,7 @@ contracts/
 │   │   │   └── make*
 │   │   ├── <language name 2>
 │   │   ...
+│   ├── README.md
 │   ├── bench*
 │   └── bench_all*
 ├── <contract name 2>/
@@ -26,16 +27,23 @@ contracts/
 
 The `contracts` folder contains subdirectories, each representing a smart contract use case.
 Each use-case describes as precisely as possible what the corresponding contract is supposed to do.
+The description _must_ be contained in `README.md`.
 
-It is accompanied usually by a reference implementation (preferably in [PlutusTx](https://plutus.readthedocs.io/en/latest/))
-and a number of test cases in the folder `src`, usually written with [naumachia](https://github.com/MitchTurner/naumachia).
-The contract also contains a `bench` and `bench_all` executable that run the tests
-for the contract and output the results in machine-readable format.
+The contract _must_ also contain executables `bench` and `bench_all`.
+They run tests and benchmarks for the contract and output the results in machine-readable format.
 
-1. did the contract pass the test?
-2. script size in bytes
-3. cpu steps consumed
-4. memory consumed
+The contract _may_ be accompanied by a reference implementation (preferably in [PlutusTx](https://plutus.readthedocs.io/en/latest/)).
+The recommended way for writing tests and benchmarks is currently using [naumachia](https://github.com/MitchTurner/naumachia).
+
+The output of the tests is in CSV with the following columns.
+
+1. name of the test
+1. `pass` or `fail`
+1. script size in bytes
+1. cpu steps consumed
+1. memory consumed
+
+Example output can be found below
 
 ```bash
 $ cd contracts/always-succeeds
@@ -50,8 +58,11 @@ uplc,pass,8,230100,1100
 ```
 
 Each subdirectoy contains one folder `impl` with subdirectories for each Smart Contract language that implemented the
-given specification, along with a an executable called `make` that prints to stdout
-the content of a JSON description of the Smart Contract (compatible with the  `cardano-cli`, often denoted `x.plutus`).
+given specification.
+Each subfolder _must_ contain an executable `make` that prints to stdout
+the content of a JSON description of the Smart Contract (compatible with the  `cardano-cli`, often denoted `script.plutus`).
+
+Example output:
 
 ```bash
 $ cd contracts/always-succeeds/impl/eopsin
@@ -62,7 +73,7 @@ $ ./make
 ## Running
 
 To run all tests for all contracts, execute `bench_all`.
-To benchmark a specific contract, execute `bench contract`.
+To benchmark a specific contract, execute `bench <contract>`.
 
 ```bash
 $ bench always-succeeds
