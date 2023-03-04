@@ -13,11 +13,27 @@ Each use-case describes as precisely as possible what the corresponding contract
 
 It is accompanied usually by a reference implementation (preferably in [PlutusTx](https://plutus.readthedocs.io/en/latest/))
 and a number of test cases in the folder `src`, usually written with [naumachia](https://github.com/MitchTurner/naumachia).
+The contract also contains a `run_test` and `run_all_tests` executable that run the tests
+for the contract and output the results in machine-readable format.
+
+```bash
+$ cd contracts/always-succeeds
+$ ./run_test eopsin
+pass,160,2045491,7702
+$ ./run_all_tests
+aiken,pass,15,517656,2001
+eopsin,pass,160,2045491,7702
+hebi,pass,28,713100,3200
+```
 
 Each subdirectoy contains one folder `impl` with subdirectories for each Smart Contract language that implemented the
-given specification, along with a bash script called `build.sh` that prints to stdout
+given specification, along with a an executable called `make` that prints to stdout
 the content of a JSON description of the Smart Contract (compatible with the  `cardano-cli`, often denoted `x.plutus`).
 
-## Running
+```bash
+$ cd contracts/always-succeeds/impl/eopsin
+$ ./make
+{"type": "PlutusScriptV2", "description": "Eopsin 0.9.1 Smart Contract", "cborHex": "589e589c01000022232498c8c8cccc0049262498926002533001488101000013263357389201144e616d654572726f723a2076616c696461746f7200498c8c8c8894ccd5cd19b8f002488101000011003133004002001222232498c8004ccc888894ccd5cd19b8f00248810103001100315333573466e3c00922010102001100415333573466e3c0092201010100110051330060020010040030020012200101"}
+```
 
-Each contract defines how to run its tests
+## Running

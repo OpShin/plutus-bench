@@ -1,0 +1,16 @@
+#! /bin/bash
+
+set -e
+
+if [ -z "$1" ] ; then
+    echo "Please provide the language to run as parameter." 1>&2
+    echo "Example usage: ./run_test eopsin" 1>&2
+    exit
+fi
+DIR="impl/$1"
+if [ ! -d "$DIR" ] ; then
+    echo "$DIR does not exist." 1>&2
+    exit
+fi
+
+(cd "$DIR" && ./make) | cargo run

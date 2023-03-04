@@ -1,4 +1,4 @@
-use naumachia::{scripts::raw_script::PlutusScriptFile};
+use naumachia::{scripts::{raw_script::PlutusScriptFile, ExecutionCost}};
 use std::{
     io::{self, Read},
     str,
@@ -10,6 +10,7 @@ use naumachia::scripts::context::{pub_key_hash_from_address_if_available, Contex
 use naumachia::scripts::ValidatorCode;
 use naumachia::Address;
 
+
 pub fn get_script() -> RawPlutusValidator<(), ()> {
     let mut plutus_file = Vec::new();
     let mut stdin = io::stdin();
@@ -20,9 +21,7 @@ pub fn get_script() -> RawPlutusValidator<(), ()> {
     return RawPlutusValidator::new_v2(plutus_script).unwrap();
 }
 
-fn main() {
-    let script = get_script();
-
+pub fn test_succeeds(script: RawPlutusValidator<(), ()>) -> Option<ExecutionCost> {
     let owner = Address::from_bech32("addr_test1qpmtp5t0t5y6cqkaz7rfsyrx7mld77kpvksgkwm0p7en7qum7a589n30e80tclzrrnj8qr4qvzj6al0vpgtnmrkkksnqd8upj0").unwrap();
 
     let script_addr = script.address(0).unwrap();
@@ -33,10 +32,15 @@ fn main() {
         .finish_input()
         .build_spend(&vec![1], 0);
     let cost = script.execute((), (), ctx).unwrap();
+    return Some(cost)
+}
+
+fn main() {
+    let script = get_script();
+
+    let script_size = script.script_hex().unwrap().len() / 2;
+    let cost = test_succeeds(script).unwrap();
     let cpu_steps = cost.cpu();
     let mem_steps = cost.mem();
-    let script_size = script.script_hex().unwrap().len() / 2;
-    println!("Script size: {script_size} bytes");
-    println!("CPU Steps:   {cpu_steps}");
-    println!("Memory:      {mem_steps}");
+    println!("pass,{script_size},{cpu_steps},{mem_steps}");
 }

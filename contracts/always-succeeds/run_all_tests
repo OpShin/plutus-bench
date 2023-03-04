@@ -1,0 +1,6 @@
+#! /bin/bash
+
+for dir in impl/*; do
+   LANG=$(basename "$dir")
+   ./run_test "$LANG" | sed -e "s/^/$LANG,/" -
+done
