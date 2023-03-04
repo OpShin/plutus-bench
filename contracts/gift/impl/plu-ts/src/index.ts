@@ -1,6 +1,6 @@
 import { PPubKeyHash, PScriptContext, Script, ScriptType, bool, compile, data, makeValidator, pfn, pmakeUnit, unit } from "@harmoniclabs/plu-ts"
 
-const alwaysSucceds = pfn([
+const giftContract = pfn([
     PPubKeyHash.type,
     data,
     PScriptContext.type
@@ -15,7 +15,7 @@ const alwaysSucceds = pfn([
 
 const compiled = compile(
     makeValidator(
-        alwaysSucceds
+        giftContract
     )    
 );
 
