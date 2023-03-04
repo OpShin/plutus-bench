@@ -27,14 +27,14 @@ Each use-case describes as precisely as possible what the corresponding contract
 
 It is accompanied usually by a reference implementation (preferably in [PlutusTx](https://plutus.readthedocs.io/en/latest/))
 and a number of test cases in the folder `src`, usually written with [naumachia](https://github.com/MitchTurner/naumachia).
-The contract also contains a `run_test` and `run_all_tests` executable that run the tests
+The contract also contains a `bench` and `bench_all` executable that run the tests
 for the contract and output the results in machine-readable format.
 
 ```bash
 $ cd contracts/always-succeeds
-$ ./run_test eopsin
+$ ./bench eopsin
 pass,160,2045491,7702
-$ ./run_all_tests
+$ ./bench_all
 aiken,pass,15,517656,2001
 eopsin,pass,160,2045491,7702
 hebi,pass,28,713100,3200
@@ -51,3 +51,17 @@ $ ./make
 ```
 
 ## Running
+
+To run all tests for all contracts, execute `bench_all`.
+To benchmark a specific contract, execute `bench contract`.
+
+```bash
+$ bench always-succeeds
+aiken,pass,15,517656,2001
+eopsin,pass,160,2045491,7702
+hebi,pass,28,713100,3200
+$ bench_all
+always-succeeds,aiken,pass,15,517656,2001
+always-succeeds,eopsin,pass,160,2045491,7702
+always-succeeds,hebi,pass,28,713100,3200
+```
