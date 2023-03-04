@@ -17,7 +17,7 @@ eopsin,spend,pass,160,2045491,7702
 hebi,spend,pass,28,713100,3200
 helios,spend,pass,8,230100,1100
 plutus-tx,spend,pass,1896,98491633,321400
-uplc,spend,pass,8,230100,1100
+pluto,spend,pass,8,230100,1100
 
 $ bench_all
 always-succeeds,aiken,spend,pass,15,517656,2001
@@ -75,8 +75,8 @@ aiken,spend,pass,15,517656,2001
 eopsin,spend,pass,160,2045491,7702
 hebi,spend,pass,28,713100,3200
 helios,spend,pass,8,230100,1100
+pluto,spend,pass,8,230100,1100
 plutus-tx,spend,pass,1896,98491633,321400
-uplc,spend,pass,8,230100,1100
 ```
 
 Each subdirectoy contains one folder `impl` with subdirectories for each Smart Contract language that implemented the
@@ -91,4 +91,3 @@ $ cd contracts/always-succeeds/impl/eopsin
 $ ./make
 {"type": "PlutusScriptV2", "description": "Eopsin 0.9.1 Smart Contract", "cborHex": "589e589c01000022232498c8c8cccc0049262498926002533001488101000013263357389201144e616d654572726f723a2076616c696461746f7200498c8c8c8894ccd5cd19b8f002488101000011003133004002001222232498c8004ccc888894ccd5cd19b8f00248810103001100315333573466e3c00922010102001100415333573466e3c0092201010100110051330060020010040030020012200101"}
 ```
-
