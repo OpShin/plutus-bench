@@ -1,0 +1,4 @@
+## Requirements
+
+- rust (stable)
+- cargo
