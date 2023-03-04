@@ -16,10 +16,12 @@ contracts/
 │   │   │   └── make*
 │   │   ├── <language name 2>
 │   │   ...
-│   ├── run_test*
-│   └── run_all_tests*
+│   ├── bench*
+│   └── bench_all*
 ├── <contract name 2>/
 ...
+├── bench*
+└── bench_all*
 ```
 
 The `contracts` folder contains subdirectories, each representing a smart contract use case.
