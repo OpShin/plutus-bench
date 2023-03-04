@@ -1,0 +1,7 @@
+#! /bin/bash
+
+set -e
+git clone https://github.com/Plutonomicon/pluto
+cd pluto
+nix-build
+cabal run assemble validator.pluto
