@@ -969,7 +969,7 @@ dependencies = [
 [[package]]
 name = "naumachia"
 version = "0.2.0"
-source = "git+https://github.com/ImperatorLang/naumachia?rev=a15f8ef4408c28ec38a18accdd7f80ddab951721#a15f8ef4408c28ec38a18accdd7f80ddab951721"
+source = "git+https://github.com/ImperatorLang/naumachia?rev=14b988141c5a805069c04da707c30f6a35a1da16#14b988141c5a805069c04da707c30f6a35a1da16"
 dependencies = [
  "async-trait",
  "bech32 0.9.1",

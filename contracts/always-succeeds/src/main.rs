@@ -1,4 +1,6 @@
-use naumachia::{scripts::{raw_script::PlutusScriptFile, ExecutionCost, raw_validator_script::plutus_data::{PlutusData}}, trireme_ledger_client::cml_client::plutus_data_interop::PlutusDataInterop};
+use naumachia::scripts::{
+    raw_script::PlutusScriptFile, raw_validator_script::plutus_data::PlutusData, ExecutionCost,
+};
 use std::{
     io::{self, Read},
     str,
@@ -9,7 +11,6 @@ use naumachia::scripts::raw_validator_script::RawPlutusValidator;
 use naumachia::scripts::context::{pub_key_hash_from_address_if_available, ContextBuilder};
 use naumachia::scripts::ValidatorCode;
 use naumachia::Address;
-
 
 pub fn get_script() -> RawPlutusValidator<PlutusData, PlutusData> {
     let mut plutus_file = Vec::new();
@@ -31,11 +32,8 @@ pub fn test_spend(script: RawPlutusValidator<PlutusData, PlutusData>) -> Option<
         .with_input(&vec![0], 0, &script_addr)
         .finish_input()
         .build_spend(&vec![1], 0);
-    let ctx_data: PlutusData = ctx.clone().into();
-    let ctx_json = serde_json::to_string(&ctx_data.to_plutus_data()).unwrap();
-    println!("{}", ctx_json);
     let cost = script.execute(().into(), ().into(), ctx).unwrap();
-    return Some(cost)
+    return Some(cost);
 }
 
 fn main() {
