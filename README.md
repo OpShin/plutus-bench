@@ -54,6 +54,7 @@ aiken,spend,pass,15,517656,2001
 eopsin,spend,pass,160,2045491,7702
 hebi,spend,pass,28,713100,3200
 helios,spend,pass,8,230100,1100
+plutus-tx,spend,pass,1896,98491633,321400
 uplc,spend,pass,8,230100,1100
 ```
 
@@ -81,12 +82,14 @@ aiken,spend,pass,15,517656,2001
 eopsin,spend,pass,160,2045491,7702
 hebi,spend,pass,28,713100,3200
 helios,spend,pass,8,230100,1100
+plutus-tx,spend,pass,1896,98491633,321400
 uplc,spend,pass,8,230100,1100
 $ bench_all
 always-succeeds,aiken,spend,pass,15,517656,2001
 always-succeeds,eopsin,spend,pass,160,2045491,7702
 always-succeeds,hebi,spend,pass,28,713100,3200
 always-succeeds,helios,spend,pass,8,230100,1100
+always-succeeds,plutus-tx,spend,pass,1896,98491633,321400
 always-succeeds,uplc,spend,pass,8,230100,1100
 gift,eopsin,spend,pass,160,2045491,7702
 gift,pluto,spend,pass,8,230100,1100
