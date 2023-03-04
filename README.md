@@ -32,6 +32,11 @@ and a number of test cases in the folder `src`, usually written with [naumachia]
 The contract also contains a `bench` and `bench_all` executable that run the tests
 for the contract and output the results in machine-readable format.
 
+1. did the contract pass the test?
+2. script size in bytes
+3. cpu steps consumed
+4. memory consumed
+
 ```bash
 $ cd contracts/always-succeeds
 $ ./bench eopsin
