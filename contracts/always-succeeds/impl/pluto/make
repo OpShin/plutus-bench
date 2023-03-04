@@ -1,0 +1,19 @@
+#! /bin/bash
+
+set -e
+
+python3.8 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt -q
+
+
+# git clone https://github.com/Plutonomicon/pluto
+# cd pluto
+# nix-build
+wget https://github.com/ImperatorLang/pluto/releases/download/v0.1.0.0/pluto -O pluto -qq
+chmod +x pluto
+./pluto assemble validator.pluto | hexdump -e '/1 "%02x"' -v > script.cbor
+
+
+uplc build script.cbor --from-cbor > /dev/null
+cat script/script.plutus
