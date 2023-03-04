@@ -6,6 +6,8 @@ version = 3
 name = "always-succeeds"
 version = "0.1.0"
 dependencies = [
+ "hex",
+ "minicbor",
  "naumachia",
  "serde_json",
 ]
@@ -967,7 +969,7 @@ dependencies = [
 [[package]]
 name = "naumachia"
 version = "0.2.0"
-source = "git+https://github.com/MitchTurner/naumachia?rev=bcba54f290cf8a66ffeaebe0ca13b8753363fb95#bcba54f290cf8a66ffeaebe0ca13b8753363fb95"
+source = "git+https://github.com/ImperatorLang/naumachia?rev=a15f8ef4408c28ec38a18accdd7f80ddab951721#a15f8ef4408c28ec38a18accdd7f80ddab951721"
 dependencies = [
  "async-trait",
  "bech32 0.9.1",

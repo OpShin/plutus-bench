@@ -1,4 +1,4 @@
-use naumachia::{scripts::{raw_script::PlutusScriptFile, ExecutionCost, raw_validator_script::plutus_data::PlutusData}, trireme_ledger_client::cml_client::plutus_data_interop::PlutusDataInterop};
+use naumachia::{scripts::{raw_script::PlutusScriptFile, ExecutionCost, raw_validator_script::plutus_data::{PlutusData}}, trireme_ledger_client::cml_client::plutus_data_interop::PlutusDataInterop};
 use std::{
     io::{self, Read},
     str,
@@ -11,7 +11,7 @@ use naumachia::scripts::ValidatorCode;
 use naumachia::Address;
 
 
-pub fn get_script() -> RawPlutusValidator<(), ()> {
+pub fn get_script() -> RawPlutusValidator<PlutusData, PlutusData> {
     let mut plutus_file = Vec::new();
     let mut stdin = io::stdin();
     stdin.read_to_end(&mut plutus_file).unwrap();
@@ -21,7 +21,7 @@ pub fn get_script() -> RawPlutusValidator<(), ()> {
     return RawPlutusValidator::new_v2(plutus_script).unwrap();
 }
 
-pub fn test_spend(script: RawPlutusValidator<(), ()>) -> Option<ExecutionCost> {
+pub fn test_spend(script: RawPlutusValidator<PlutusData, PlutusData>) -> Option<ExecutionCost> {
     let owner = Address::from_bech32("addr_test1qpmtp5t0t5y6cqkaz7rfsyrx7mld77kpvksgkwm0p7en7qum7a589n30e80tclzrrnj8qr4qvzj6al0vpgtnmrkkksnqd8upj0").unwrap();
 
     let script_addr = script.address(0).unwrap();
@@ -34,7 +34,7 @@ pub fn test_spend(script: RawPlutusValidator<(), ()>) -> Option<ExecutionCost> {
     let ctx_data: PlutusData = ctx.clone().into();
     let ctx_json = serde_json::to_string(&ctx_data.to_plutus_data()).unwrap();
     println!("{}", ctx_json);
-    let cost = script.execute((), (), ctx).unwrap();
+    let cost = script.execute(().into(), ().into(), ctx).unwrap();
     return Some(cost)
 }
 
