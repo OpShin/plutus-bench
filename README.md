@@ -3,7 +3,7 @@
 <h1>Plutus-Bench</h1>
 </div>
 
-A repository that lets Smart Contract languages compete via unified benchmarks.
+Comparable, unified benchmark for Cardano Smart Contract languages.
 
 
 ## Structure
