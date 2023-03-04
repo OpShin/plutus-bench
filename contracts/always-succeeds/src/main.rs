@@ -22,8 +22,6 @@ pub fn get_script() -> RawPlutusValidator<(), ()> {
 
 fn main() {
     let script = get_script();
-    let script_size = script.script_hex().unwrap().len() / 2;
-    println!("Script size: {script_size}");
 
     let owner = Address::from_bech32("addr_test1qpmtp5t0t5y6cqkaz7rfsyrx7mld77kpvksgkwm0p7en7qum7a589n30e80tclzrrnj8qr4qvzj6al0vpgtnmrkkksnqd8upj0").unwrap();
 
@@ -37,7 +35,8 @@ fn main() {
     let cost = script.execute((), (), ctx).unwrap();
     let cpu_steps = cost.cpu();
     let mem_steps = cost.mem();
-    println!("Execution succeded!");
-    println!("CPU Steps: {cpu_steps}");
-    println!("Memory:    {mem_steps}");
+    let script_size = script.script_hex().unwrap().len() / 2;
+    println!("Script size: {script_size} bytes");
+    println!("CPU Steps:   {cpu_steps}");
+    println!("Memory:      {mem_steps}");
 }
