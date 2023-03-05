@@ -1,6 +1,9 @@
-use naumachia::{scripts::{
-    raw_script::PlutusScriptFile, raw_validator_script::plutus_data::PlutusData, ExecutionCost,
-}, trireme_ledger_client::cml_client::plutus_data_interop::PlutusDataInterop};
+use naumachia::{
+    scripts::{
+        raw_script::PlutusScriptFile, raw_validator_script::plutus_data::PlutusData, ExecutionCost,
+    },
+    trireme_ledger_client::cml_client::plutus_data_interop::PlutusDataInterop,
+};
 use std::{
     io::{self, Read},
     str,
@@ -33,7 +36,9 @@ pub fn test_spend(script: RawPlutusValidator<PlutusData, PlutusData>) -> Option<
         .with_datum_hash_from_datum::<PlutusData>(owner_pkh.clone().into())
         .finish_input()
         .build_spend(&vec![1], 0);
-    let cost = script.execute(owner_pkh.clone().into(), ().into(), ctx).unwrap();
+    let cost = script
+        .execute(owner_pkh.clone().into(), ().into(), ctx)
+        .unwrap();
     return Some(cost);
 }
 
@@ -50,7 +55,9 @@ pub fn test_fail(script: RawPlutusValidator<PlutusData, PlutusData>) -> Option<E
         .with_datum_hash_from_datum::<PlutusData>(other_pkh.clone().into())
         .finish_input()
         .build_spend(&vec![1], 0);
-    let cost = script.execute(other_pkh.clone().into(), ().into(), ctx).unwrap();
+    let cost = script
+        .execute(other_pkh.clone().into(), ().into(), ctx)
+        .unwrap();
     return Some(cost);
 }
 
