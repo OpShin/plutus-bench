@@ -2,4 +2,5 @@
 
 members = [
     "contracts/always-succeeds",
+    "contracts/gift",
 ]

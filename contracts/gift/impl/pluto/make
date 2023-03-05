@@ -7,11 +7,10 @@ source venv/bin/activate
 pip install -r requirements.txt -q
 
 
-# git clone https://github.com/Plutonomicon/pluto
-# cd pluto
-# nix-build
-wget https://github.com/ImperatorLang/pluto/releases/download/v0.1.0.0/pluto -O pluto -qq
-chmod +x pluto
+git clone https://github.com/Plutonomicon/pluto
+cd pluto
+nix-build  # stack build as fast but unstable alternative
+cp result/bin/pluto .
 ./pluto assemble validator.pluto | hexdump -e '/1 "%02x"' -v > script.cbor
 
 

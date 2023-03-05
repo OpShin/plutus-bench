@@ -8,7 +8,7 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "minicbor",
- "naumachia",
+ "naumachia 0.2.0 (git+https://github.com/ImperatorLang/naumachia?rev=fe69407f0ee37b7c96e170bff18242a0878f4684)",
  "serde_json",
 ]
 
@@ -620,6 +620,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "gift"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "minicbor",
+ "naumachia 0.2.0 (git+https://github.com/ImperatorLang/naumachia?rev=6e5f30e02476e736ce9df9f9ae463bc800d1c03a)",
+ "serde_json",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -969,7 +979,36 @@ dependencies = [
 [[package]]
 name = "naumachia"
 version = "0.2.0"
-source = "git+https://github.com/ImperatorLang/naumachia?rev=14b988141c5a805069c04da707c30f6a35a1da16#14b988141c5a805069c04da707c30f6a35a1da16"
+source = "git+https://github.com/ImperatorLang/naumachia?rev=6e5f30e02476e736ce9df9f9ae463bc800d1c03a#6e5f30e02476e736ce9df9f9ae463bc800d1c03a"
+dependencies = [
+ "async-trait",
+ "bech32 0.9.1",
+ "blockfrost-http-client",
+ "cardano-multiplatform-lib",
+ "dirs",
+ "futures",
+ "hex",
+ "minicbor",
+ "pallas-addresses 0.17.0",
+ "rand",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_with",
+ "tempfile",
+ "thiserror",
+ "tiny-bip39",
+ "tokio",
+ "toml",
+ "uplc",
+ "url",
+ "uuid",
+]
+
+[[package]]
+name = "naumachia"
+version = "0.2.0"
+source = "git+https://github.com/ImperatorLang/naumachia?rev=fe69407f0ee37b7c96e170bff18242a0878f4684#fe69407f0ee37b7c96e170bff18242a0878f4684"
 dependencies = [
  "async-trait",
  "bech32 0.9.1",

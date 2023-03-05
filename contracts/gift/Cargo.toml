@@ -1,5 +1,5 @@
 [package]
-name = "always-succeeds"
+name = "gift"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,5 +11,5 @@ minicbor = "0.18.0"
 
 [dependencies.naumachia]
 git = "https://github.com/ImperatorLang/naumachia"
-rev = "fe69407f0ee37b7c96e170bff18242a0878f4684"
+rev = "6e5f30e02476e736ce9df9f9ae463bc800d1c03a"
 
