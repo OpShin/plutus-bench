@@ -1,5 +1,7 @@
 use aiken/transaction.{ScriptContext}
 
-pub fn spend(datum: Void, redeemer: Void, context: ScriptContext) -> Bool {
-  True
+validator voting {
+  fn(_voting_datum: Void, _redeemer: Void, _sc: ScriptContext) -> Bool {
+    True
+  }
 }
