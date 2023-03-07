@@ -23,6 +23,7 @@ $ bench_all
 always-succeeds,aiken,spend,pass,15,517656,2001
 ...
 always-succeeds,uplc,spend,pass,8,230100,1100
+gift,plutus-tx,spend,pass,1896,98491633,321400
 gift,eopsin,spend,pass,496,25817643,72483
 gift,hebi,spend,pass,287,21317688,59373
 ...

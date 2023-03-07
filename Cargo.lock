@@ -8,7 +8,7 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "minicbor",
- "naumachia 0.2.0 (git+https://github.com/ImperatorLang/naumachia?rev=fe69407f0ee37b7c96e170bff18242a0878f4684)",
+ "naumachia",
  "serde_json",
 ]
 
@@ -625,7 +625,7 @@ version = "0.1.0"
 dependencies = [
  "hex",
  "minicbor",
- "naumachia 0.2.0 (git+https://github.com/ImperatorLang/naumachia?rev=6e5f30e02476e736ce9df9f9ae463bc800d1c03a)",
+ "naumachia",
  "serde_json",
 ]
 
@@ -979,36 +979,7 @@ dependencies = [
 [[package]]
 name = "naumachia"
 version = "0.2.0"
-source = "git+https://github.com/ImperatorLang/naumachia?rev=6e5f30e02476e736ce9df9f9ae463bc800d1c03a#6e5f30e02476e736ce9df9f9ae463bc800d1c03a"
-dependencies = [
- "async-trait",
- "bech32 0.9.1",
- "blockfrost-http-client",
- "cardano-multiplatform-lib",
- "dirs",
- "futures",
- "hex",
- "minicbor",
- "pallas-addresses 0.17.0",
- "rand",
- "reqwest",
- "serde",
- "serde_json",
- "serde_with",
- "tempfile",
- "thiserror",
- "tiny-bip39",
- "tokio",
- "toml",
- "uplc",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "naumachia"
-version = "0.2.0"
-source = "git+https://github.com/ImperatorLang/naumachia?rev=fe69407f0ee37b7c96e170bff18242a0878f4684#fe69407f0ee37b7c96e170bff18242a0878f4684"
+source = "git+https://github.com/ImperatorLang/naumachia?rev=0a509c98f1f0685cd930fa806fcff1379641dd0c#0a509c98f1f0685cd930fa806fcff1379641dd0c"
 dependencies = [
  "async-trait",
  "bech32 0.9.1",

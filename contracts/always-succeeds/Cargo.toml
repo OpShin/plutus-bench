@@ -11,5 +11,5 @@ minicbor = "0.18.0"
 
 [dependencies.naumachia]
 git = "https://github.com/ImperatorLang/naumachia"
-rev = "fe69407f0ee37b7c96e170bff18242a0878f4684"
+rev = "0a509c98f1f0685cd930fa806fcff1379641dd0c"
 
