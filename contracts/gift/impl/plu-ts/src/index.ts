@@ -1,4 +1,4 @@
-import { PPubKeyHash, PScriptContext, Script, ScriptType, bool, compile, data, makeValidator, pfn, pmakeUnit, unit } from "@harmoniclabs/plu-ts"
+import { PPubKeyHash, PScriptContext, Script, ScriptType, bool, compile, data, makeValidator, pfn } from "@harmoniclabs/plu-ts"
 
 const giftContract = pfn([
     PPubKeyHash.type,
