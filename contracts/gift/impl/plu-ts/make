@@ -2,5 +2,5 @@
 
 set -e
 
-npm install --silent --registry=https://npm.pkg.github.com
+npm install --silent
 npm run --silent  start
