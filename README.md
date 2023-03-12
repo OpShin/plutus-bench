@@ -16,6 +16,8 @@ aiken,spend,pass,15,517656,2001
 eopsin,spend,pass,160,2045491,7702
 hebi,spend,pass,28,713100,3200
 helios,spend,pass,8,230100,1100
+helios,spend,pass,8,230100,1100
+plu-ts,spend,pass,8,230100,1100
 plutus-tx,spend,pass,1896,98491633,321400
 pluto,spend,pass,8,230100,1100
 
