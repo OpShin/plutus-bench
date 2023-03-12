@@ -13,4 +13,4 @@ if [ ! -d "$DIR" ] ; then
     exit
 fi
 
-(cd "$DIR" && ./make) | cargo run
+(cd "$DIR" && ./make) | node src/main.mjs
