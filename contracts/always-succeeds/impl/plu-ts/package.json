@@ -8,7 +8,7 @@
         "start": "npm run --silent build && node dist/src/index.js"
     },
     "dependencies": {
-        "@harmoniclabs/plu-ts": "^0.2.0-dev21"
+        "@harmoniclabs/plu-ts": "^0.2.1"
     },
     "devDependencies": {
         "tsc-alias": "^1.7.1",
