@@ -1,5 +1,5 @@
 use aiken/transaction.{ScriptContext}
 
-pub fn spend(datum: Void, redeemer: Void, context: ScriptContext) -> Bool {
+pub fn spend(_datum: Void, _redeemer: Void, _context: ScriptContext) -> Bool {
   True
 }
