@@ -1,1 +1,1 @@
-from mock import MockChainContext
+from .mock import MockChainContext

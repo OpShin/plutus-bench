@@ -7,10 +7,5 @@ if [ -z "$1" ] ; then
     echo "Example usage: $0 opshin" 1>&2
     exit
 fi
-DIR="impl/$1"
-if [ ! -d "$DIR" ] ; then
-    echo "$DIR does not exist." 1>&2
-    exit
-fi
 
-(cd "$DIR" && pytest)
+pytest $1

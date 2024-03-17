@@ -3,6 +3,7 @@ from typing import Optional
 
 import pycardano
 import uplc
+import uplc.cost_model
 from pycardano import (
     ScriptHash,
     RedeemerTag,
@@ -11,6 +12,8 @@ from pycardano import (
     PlutusV2Script,
     UTxO,
 )
+
+from .ledger.api_v2 import *
 
 
 def to_staking_credential(
@@ -360,19 +363,21 @@ def evaluate_script(script_invocation: ScriptInvocation):
         program_args.append(data)
     allowed_cpu_steps = script_invocation.redeemer.ex_units.steps
     allowed_mem_steps = script_invocation.redeemer.ex_units.mem
-    ((suc, err), logs, (remaining_cpu_steps, remaining_mem_steps)) = pyaiken.uplc.eval(
-        uplc_program, program_args, allowed_cpu_steps, allowed_mem_steps
+    res = uplc.eval(
+        uplc.tools.apply(uplc_program, *program_args),
+        budget=uplc.cost_model.Budget(allowed_cpu_steps, allowed_mem_steps)
     )
+    logs = res.logs
     if logs:
         print("Script debug logs:")
         print("==================")
         print("\n".join(logs))
         print("==================")
     return (
-        (suc, err),
+        (res.result),
         (
-            remaining_cpu_steps,
-            remaining_mem_steps,
+            res.cost.cpu,
+            res.cost.memory,
         ),
         logs,
     )

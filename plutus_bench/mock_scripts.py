@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 from pytest_mock import MockerFixture
 
-from src.utils.mock import MockChainContext, MockUser
+from .mock import MockChainContext, MockUser
 
 
 def mock_context(

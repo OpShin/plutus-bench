@@ -163,9 +163,9 @@ class MockChainContext(ChainContext):
                     self.protocol_param.max_tx_ex_steps,
                 )
 
-            (suc, err), (cpu, mem), logs = evaluate_script(invocation)
-            if err:
-                raise ValueError(err, logs)
+            res, (cpu, mem), logs = evaluate_script(invocation)
+            if isinstance(res, Exception):
+                raise res
             key = f"{redeemer.tag.name.lower()}:{redeemer.index}"
             ret[key] = ExecutionUnits(mem, cpu)
         return ret
