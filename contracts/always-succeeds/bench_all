@@ -1,6 +1,0 @@
-#! /bin/bash
-
-for dir in impl/*; do
-   LANG=$(basename "$dir")
-   ./bench "$LANG" | sed -e "s/^/$LANG,/" -
-done
