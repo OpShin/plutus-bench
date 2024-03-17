@@ -7,7 +7,7 @@ venv: requirements.txt
 	source venv/bin/activate && pip install -r requirements.txt -q
 
 pluto-bin:
-	git clone https://github.com/Plutonomicon/pluto
+	git clone https://github.com/Plutonomicon/pluto || true
 	cd pluto
 	# nix-build  # slower
 	stack build pluto # less stable
