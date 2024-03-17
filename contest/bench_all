@@ -1,6 +1,0 @@
-#! /bin/bash
-
-for dir in contracts/*; do
-   CONTRACT=$(basename "$dir")
-   ./bench $CONTRACT | sed -e "s/^/$CONTRACT,/" -
-done

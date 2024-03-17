@@ -56,8 +56,8 @@ The description _must_ be contained in `README.md`.
 The contract _must_ also contain executables `bench` and `bench_all`.
 They run tests and benchmarks for the contract and output the results in machine-readable format.
 
-The contract _may_ be accompanied by a reference implementation (preferably in [PlutusTx](https://plutus.readthedocs.io/en/latest/)).
-The recommended way for writing tests and benchmarks is currently using [naumachia](https://github.com/MitchTurner/naumachia).
+The contract _may_ be accompanied by a reference implementation.
+The recommended way for writing tests and benchmarks is currently using `plutus-bench`.
 
 The output of the tests is in CSV with the following columns.
 
@@ -84,13 +84,14 @@ plutus-tx,spend,pass,1896,98491633,321400
 
 Each subdirectoy contains one folder `impl` with subdirectories for each Smart Contract language that implemented the
 given specification.
-Each subfolder _must_ contain an executable `make` that prints to stdout
-the content of a JSON description of the Smart Contract (compatible with the  `cardano-cli`, often denoted `script.plutus`).
+The folder should contain a (fully applied) plutus blueprint, `script.plutus` or `script.cbor` file.
+It is highly recommended to add a README file to the implementation folder, which describes the implementation and how to build it (i.e. by providing a link to an external repository).
+The folder may contain a `Makefile` file, which builds the contract as default target.
 
 Example output:
 
 ```bash
 $ cd contracts/always-succeeds/impl/opshin
-$ ./make
+$ cat script.plutus
 {"type": "PlutusScriptV2", "description": "opshin 0.9.14 Smart Contract", "cborHex": "589e589c01000022232498c8c8cccc0049262498926002533001488101000013263357389201144e616d654572726f723a2076616c696461746f7200498c8c8c8894ccd5cd19b8f002488101000011003133004002001222232498c8004ccc888894ccd5cd19b8f00248810103001100315333573466e3c00922010102001100415333573466e3c0092201010100110051330060020010040030020012200101"}
 ```
