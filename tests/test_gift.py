@@ -5,7 +5,7 @@ import pytest
 
 from plutus_bench import MockChainContext, MockUser
 
-from test.gift import spend_from_gift_contract
+from tests.gift import spend_from_gift_contract
 from plutus_bench.tool import address_from_script, load_contract, ScriptType
 
 own_path = pathlib.Path(__file__)
@@ -47,11 +47,15 @@ def test_other_user_spend_from_gift_contract():
         ),
     )
     pytest.raises(
-        spend_from_gift_contract(
-            payment_key.signing_key,
-            gift_contract_path,
-            context,
-            enforce_true_owner=False,
-        ),
-        AssertionError,
+        RuntimeError,
+        spend_from_gift_contract,
+        payment_key.signing_key,
+        gift_contract_path,
+        context,
+        enforce_true_owner=False,
     )
+
+
+if __name__ == "__main__":
+    test_spend_from_gift_contract()
+    test_other_user_spend_from_gift_contract()
