@@ -7,11 +7,11 @@ from plutus_bench.tool import load_contract, ScriptType, address_from_script
 def spend_from_gift_contract(
     payment_key: pycardano.PaymentSigningKey,
     gift_contract_path: str | pathlib.Path,
-    context: ChainContext
+    context: ChainContext,
+    enforce_true_owner: bool = True,
 ):
     network = context.network
     gift_contract = load_contract(gift_contract_path, ScriptType.PlutusV2)
-    script_hash = pycardano.script_hash(gift_contract)
     script_address = address_from_script(gift_contract, network)
     payment_vkey_hash = payment_key.to_verification_key().hash()
     payment_address = pycardano.Address(payment_part=payment_vkey_hash, network=network)
@@ -21,7 +21,7 @@ def spend_from_gift_contract(
         datum = u.output.datum
         if datum is None:
             continue
-        if datum != payment_vkey_hash.payload:
+        if enforce_true_owner and datum != payment_vkey_hash.payload:
             continue
         spend_utxo = u
         break
