@@ -1,9 +1,11 @@
 from functools import cache
 from typing import Optional
 
+import cbor2
 import pycardano
 import uplc
 import uplc.cost_model
+import uplc.ast
 from pycardano import (
     ScriptHash,
     RedeemerTag,
@@ -346,33 +348,26 @@ def generate_script_contexts_resolved(
 
 
 @cache
-def uplc_unflat(hex: str):
-    return uplc.unflatten(bytes.fromhex(hex))
+def uplc_unflat(script: bytes):
+    return uplc.unflatten(script)
+
+def uplc_plutus_data(a: pycardano.Datum) -> PlutusData:
+    return uplc.ast.data_from_cbor(cbor2.dumps(a, default=pycardano.default_encoder))
 
 
 def evaluate_script(script_invocation: ScriptInvocation):
-    uplc_program = uplc_unflat(script_invocation.script.hex()).dumps(
-        dialect=uplc.UPLCDialect.Aiken
-    )
+    uplc_program = uplc_unflat(script_invocation.script)
     args = [script_invocation.redeemer.data, script_invocation.script_context]
     if script_invocation.datum is not None:
         args.insert(0, script_invocation.datum)
-    program_args = []
-    for a in args:
-        data = f"(con data #{PlutusData.to_cbor(a).hex()})"
-        program_args.append(data)
+    args = [uplc_plutus_data(a) for a in args]
     allowed_cpu_steps = script_invocation.redeemer.ex_units.steps
     allowed_mem_steps = script_invocation.redeemer.ex_units.mem
     res = uplc.eval(
-        uplc.tools.apply(uplc_program, *program_args),
+        uplc.tools.apply(uplc_program, *args),
         budget=uplc.cost_model.Budget(allowed_cpu_steps, allowed_mem_steps)
     )
     logs = res.logs
-    if logs:
-        print("Script debug logs:")
-        print("==================")
-        print("\n".join(logs))
-        print("==================")
     return (
         (res.result),
         (

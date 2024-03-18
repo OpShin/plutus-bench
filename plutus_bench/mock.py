@@ -1,3 +1,5 @@
+import random
+import uuid
 from collections import defaultdict
 from typing import Any, Callable, Dict, List, Optional, Union
 
@@ -51,6 +53,7 @@ class MockChainContext(ChainContext):
         protocol_param: Optional[ProtocolParameters] = None,
         genesis_param: Optional[GenesisParameters] = None,
         opshin_scripts: Optional[Dict[ScriptType, OpshinValidator]] = None,
+        seed: int = 0,
     ):
         """
         A mock PyCardano ChainContext that you can use for testing offchain code and evaluating scripts locally.
@@ -60,6 +63,7 @@ class MockChainContext(ChainContext):
             genesis_param: Cardano Node genesis parameters. Defaults to preview network parameters.
             opshin_scripts: If set, evaluate the opshin validator when the plutus script matches.
         """
+        self.random = random.Random(seed)
         self._protocol_param = (
             protocol_param if protocol_param else DEFAULT_PROTOCOL_PARAMETERS
         )
@@ -105,6 +109,13 @@ class MockChainContext(ChainContext):
         self._utxo_state[address].append(utxo)
         self._address_lookup[utxo] = address
         self._utxo_from_txid[utxo.input.transaction_id][utxo.input.index] = utxo
+
+    def add_txout(self, txout: TransactionOutput):
+        """
+        Basically the same as add_utxo, but clarifies that the transaction id does not matter.
+        """
+        utxo = UTxO(TransactionInput(TransactionId(self.random.randbytes(32)), 0), txout)
+        self.add_utxo(utxo)
 
     def get_address(self, utxo: UTxO) -> str:
         return self._address_lookup[utxo]
@@ -194,22 +205,14 @@ class MockUser:
         self.verification_key = PaymentVerificationKey.from_signing_key(
             self.signing_key
         )
-        self.network = Network.TESTNET
+        self.network = self.context.network
         self.address = Address(
             payment_part=self.verification_key.hash(), network=self.network
         )
 
     def fund(self, amount: Union[int, Value]):
-        if isinstance(amount, int):
-            value = Value(coin=amount)
-        else:
-            value = amount
-        self.context.add_utxo(
-            # not sure what the correct genesis transaction is
-            UTxO(
-                TransactionInput(TransactionId(self.verification_key.payload), 0),
-                TransactionOutput(self.address, value),
-            ),
+        self.context.add_txout(
+            TransactionOutput(self.address, amount),
         )
 
     def utxos(self):
