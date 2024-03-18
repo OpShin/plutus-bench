@@ -53,6 +53,16 @@ def test_other_user_spend_from_gift_contract():
         gift_contract_path,
         context,
         enforce_true_owner=False,
+        set_required_signers=True,
+    )
+    pytest.raises(
+        RuntimeError,
+        spend_from_gift_contract,
+        payment_key.signing_key,
+        gift_contract_path,
+        context,
+        enforce_true_owner=False,
+        set_required_signers=False,
     )
 
 

@@ -10,6 +10,7 @@ def spend_from_gift_contract(
     gift_contract_path: str | pathlib.Path,
     context: ChainContext,
     enforce_true_owner: bool = True,
+    set_required_signers: bool = True,
 ):
     network = context.network
     gift_contract = load_contract(gift_contract_path, ScriptType.PlutusV2)
@@ -41,5 +42,6 @@ def spend_from_gift_contract(
     tx = txbuilder.build_and_sign(
         signing_keys=[payment_key],
         change_address=payment_address,
+        auto_required_signers=set_required_signers,
     )
     context.submit_tx(tx)
