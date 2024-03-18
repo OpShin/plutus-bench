@@ -4,6 +4,7 @@ import pycardano
 from pycardano import ChainContext
 from plutus_bench.tool import load_contract, ScriptType, address_from_script
 
+
 def spend_from_gift_contract(
     payment_key: pycardano.PaymentSigningKey,
     gift_contract_path: str | pathlib.Path,
@@ -42,5 +43,3 @@ def spend_from_gift_contract(
         change_address=payment_address,
     )
     context.submit_tx(tx)
-
-

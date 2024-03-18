@@ -114,7 +114,9 @@ class MockChainContext(ChainContext):
         """
         Basically the same as add_utxo, but clarifies that the transaction id does not matter.
         """
-        utxo = UTxO(TransactionInput(TransactionId(self.random.randbytes(32)), 0), txout)
+        utxo = UTxO(
+            TransactionInput(TransactionId(self.random.randbytes(32)), 0), txout
+        )
         self.add_utxo(utxo)
 
     def get_address(self, utxo: UTxO) -> str:

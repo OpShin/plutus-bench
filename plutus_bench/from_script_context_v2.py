@@ -3,6 +3,7 @@ from typing import Tuple, TypedDict, Optional
 import pycardano
 from .ledger.api_v2 import *
 
+
 def from_staking_credential(
     sk: Union[SomeStakingCredential, NoStakingCredential]
 ) -> Union[

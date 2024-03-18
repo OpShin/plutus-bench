@@ -189,21 +189,25 @@ def to_tx_info(
     )
     return TxInfo(
         [to_tx_in_info(i, o) for i, o in zip(tx_body.inputs, resolved_inputs)],
-        [
-            to_tx_in_info(i, o)
-            for i, o in zip(tx_body.reference_inputs, resolved_reference_inputs)
-        ]
-        if tx_body.reference_inputs is not None
-        else [],
+        (
+            [
+                to_tx_in_info(i, o)
+                for i, o in zip(tx_body.reference_inputs, resolved_reference_inputs)
+            ]
+            if tx_body.reference_inputs is not None
+            else []
+        ),
         [to_tx_out(o) for o in tx_body.outputs],
         value_to_value(pycardano.Value(tx_body.fee)),
         multiasset_to_value(tx_body.mint),
         [to_dcert(c) for c in tx_body.certificates] if tx_body.certificates else [],
         to_wdrl(tx_body.withdraws),
         to_valid_range(tx_body.validity_start, tx_body.ttl, posix_from_slot),
-        [to_pubkeyhash(s) for s in tx_body.required_signers]
-        if tx_body.required_signers
-        else [],
+        (
+            [to_pubkeyhash(s) for s in tx_body.required_signers]
+            if tx_body.required_signers
+            else []
+        ),
         {to_redeemer_purpose(r, tx_body): r.data for r in redeemers},
         {pycardano.datum_hash(d).payload: d for d in datums},
         to_tx_id(tx_body.id),
@@ -351,6 +355,7 @@ def generate_script_contexts_resolved(
 def uplc_unflat(script: bytes):
     return uplc.unflatten(script)
 
+
 def uplc_plutus_data(a: pycardano.Datum) -> PlutusData:
     return uplc.ast.data_from_cbor(cbor2.dumps(a, default=pycardano.default_encoder))
 
@@ -365,7 +370,7 @@ def evaluate_script(script_invocation: ScriptInvocation):
     allowed_mem_steps = script_invocation.redeemer.ex_units.mem
     res = uplc.eval(
         uplc.tools.apply(uplc_program, *args),
-        budget=uplc.cost_model.Budget(allowed_cpu_steps, allowed_mem_steps)
+        budget=uplc.cost_model.Budget(allowed_cpu_steps, allowed_mem_steps),
     )
     logs = res.logs
     return (

@@ -6,13 +6,16 @@ import pycardano
 
 from enum import Enum
 
+
 class ScriptType(Enum):
     NativeScript = "NativeScript"
     PlutusV1 = "PlutusV1"
     PlutusV2 = "PlutusV2"
 
 
-def load_contract(path: pathlib.Path | str, plutus_version: ScriptType) -> pycardano.ScriptType:
+def load_contract(
+    path: pathlib.Path | str, plutus_version: ScriptType
+) -> pycardano.ScriptType:
     script = None
     script_cbor = path / "script.cbor" if path.is_dir() else path
     if script_cbor.exists():
@@ -45,6 +48,9 @@ def load_contract(path: pathlib.Path | str, plutus_version: ScriptType) -> pycar
     else:
         return pycardano.NativeScript(script)
 
-def address_from_script(script: pycardano.ScriptType, network: pycardano.Network) -> pycardano.Address:
+
+def address_from_script(
+    script: pycardano.ScriptType, network: pycardano.Network
+) -> pycardano.Address:
     script_hash = pycardano.script_hash(script)
     return pycardano.Address(payment_part=script_hash, network=network)
