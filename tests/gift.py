@@ -1,5 +1,6 @@
 import pathlib
 
+import cbor2
 import pycardano
 from pycardano import ChainContext
 from plutus_bench.tool import load_contract, ScriptType, address_from_script
@@ -22,6 +23,10 @@ def spend_from_gift_contract(
     for u in utxos:
         datum = u.output.datum
         if datum is None:
+            continue
+        try:
+            datum = cbor2.loads(datum.cbor)
+        except cbor2.CBORDecodeError:
             continue
         if enforce_true_owner and datum != payment_vkey_hash.payload:
             continue

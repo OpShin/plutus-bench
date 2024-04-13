@@ -2,8 +2,10 @@ import pathlib
 
 import pycardano
 import pytest
+from pycardano import TransactionFailedException
 
 from plutus_bench import MockChainContext, MockUser
+from plutus_bench.mock import MockFrostApi
 
 from tests.gift import spend_from_gift_contract
 from plutus_bench.tool import address_from_script, load_contract, ScriptType
@@ -12,14 +14,15 @@ own_path = pathlib.Path(__file__)
 
 
 def test_spend_from_gift_contract():
-    context = MockChainContext()
-    payment_key = MockUser(context)
+    api = MockFrostApi()
+    context = MockChainContext(api=api)
+    payment_key = MockUser(api)
     payment_key.fund(100_000_000)
     gift_contract_path = own_path.parent / "gift.plutus"
     gift_address = address_from_script(
         load_contract(gift_contract_path, ScriptType.PlutusV2), network=context.network
     )
-    context.add_txout(
+    api.add_txout(
         pycardano.TransactionOutput(
             address=gift_address,
             amount=pycardano.Value(coin=1000000),
@@ -30,16 +33,17 @@ def test_spend_from_gift_contract():
 
 
 def test_other_user_spend_from_gift_contract():
-    context = MockChainContext()
-    payment_key = MockUser(context)
+    api = MockFrostApi()
+    context = MockChainContext(api)
+    payment_key = MockUser(api)
     payment_key.fund(100_000_000)
 
-    owning_user = MockUser(context)
+    owning_user = MockUser(api)
     gift_contract_path = own_path.parent / "gift.plutus"
     gift_address = address_from_script(
         load_contract(gift_contract_path, ScriptType.PlutusV2), network=context.network
     )
-    context.add_txout(
+    api.add_txout(
         pycardano.TransactionOutput(
             address=gift_address,
             amount=pycardano.Value(coin=1000000),
@@ -47,7 +51,7 @@ def test_other_user_spend_from_gift_contract():
         ),
     )
     pytest.raises(
-        RuntimeError,
+        TransactionFailedException,
         spend_from_gift_contract,
         payment_key.signing_key,
         gift_contract_path,
@@ -56,7 +60,7 @@ def test_other_user_spend_from_gift_contract():
         set_required_signers=True,
     )
     pytest.raises(
-        RuntimeError,
+        TransactionFailedException,
         spend_from_gift_contract,
         payment_key.signing_key,
         gift_contract_path,

@@ -18,6 +18,32 @@ like [translucent](https://github.com/antibody-cardano/translucent) and [pycarda
 - **Holistic Testing**: Plutus Bench allows you to test the entire lifecycle of a smart contract, from minting to consuming, in a single test.
 - **Simple**: Plutus Bench is designed to be simple to use, and easy to integrate with your existing infrastructure.
 
+### Installation and running
+
+```bash
+# install the plutus-bench package
+git clone https://github.com/OpShin/plutus-bench.git
+cd plutus-bench
+# install the package
+pip install .
+# run the mock server
+uvicorn plutus_bench.mockfrost.server:app 
+```
+
+After running these commands, a mock blockfrost server will be running on `http://localhost:8000`.
+Head to `http://localhost:8000/docs` to see the API documentation.
+
+### Usage
+
+Generally the workflow is as follows:
+
+- Create a new session with the `/session/create` endpoint. You receive a session ID.
+- Initialize a BlockFrost client in your off-chain code, and point it to the mock server. The base url is `http://localhost:8000/<session-id>/api/v1`. Project id is not required.
+
+That's it! You can now interact with the mock ledger using the BlockFrost client.
+
+You may further manipulate the ledger using the `/<session-id>/ledger` endpoints.
+
 ### Similar Projects
 
 - [lucid transaction emulator](https://lucid.spacebudz.io/) - Allows emulation of transactions on the Cardano blockchain. Only supports JavaScript and TypeScript.
