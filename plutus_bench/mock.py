@@ -124,8 +124,10 @@ class MockFrostApi:
         else:
             self.opshin_scripts = opshin_scripts
         self._scripts: Dict[ScriptHash, ScriptType] = {}
+        # map from address to outputs
         self._utxo_state: Dict[str, List[UTxO]] = defaultdict(list)
-        self._address_lookup: Dict[UTxO, str] = {}
+        # map from utxo to address
+        self._address_lookup: Dict[TransactionInput, str] = {}
         self._utxo_from_txid: Dict[TransactionId, Dict[int, UTxO]] = defaultdict(dict)
         self._network = Network.TESTNET
         self._epoch = 0
@@ -157,13 +159,13 @@ class MockFrostApi:
         self._last_block_slot = slot
         self._epoch = self._last_block_slot // self._genesis_param.epoch_length
 
-    def _utxos(self, address: str) -> List[UTxO]:
-        return self._utxo_state.get(address, [])
+    def _utxos(self, address: str | Address) -> List[UTxO]:
+        return self._utxo_state.get(str(address), [])
 
     def add_utxo(self, utxo: UTxO):
         address = str(utxo.output.address)
         self._utxo_state[address].append(utxo)
-        self._address_lookup[utxo] = address
+        self._address_lookup[utxo.input] = address
         self._utxo_from_txid[utxo.input.transaction_id][utxo.input.index] = utxo
         # TODO properly determine the script type
         if utxo.output.script:
@@ -182,15 +184,20 @@ class MockFrostApi:
         self.add_utxo(utxo)
         return utxo.input
 
-    def get_address(self, utxo: UTxO) -> str:
+    def get_address(self, utxo: TransactionInput) -> str:
         return self._address_lookup[utxo]
 
-    def remove_utxo(self, utxo: UTxO):
-        del self._utxo_from_txid[utxo.input.transaction_id][utxo.input.index]
-        address = self._address_lookup[utxo]
-        del self._address_lookup[utxo]
-        i = self._utxo_state[address].index(utxo)
+    def remove_txi(self, txi: TransactionInput):
+        del self._utxo_from_txid[txi.transaction_id][txi.index]
+        address = self._address_lookup[txi]
+        del self._address_lookup[txi]
+        i = [
+            i for i, utxo in enumerate(self._utxo_state[address]) if utxo.input == txi
+        ][0]
         self._utxo_state[address].pop(i)
+
+    def remove_utxo(self, utxo: UTxO):
+        self.remove_txi(utxo.input)
 
     def submit_tx(self, tx: Transaction):
         self.evaluate_tx(tx)

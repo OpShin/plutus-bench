@@ -8,7 +8,12 @@ from multiprocessing import Manager
 
 import pycardano
 from fastapi import FastAPI
-from pycardano import ProtocolParameters, GenesisParameters
+from pycardano import (
+    ProtocolParameters,
+    GenesisParameters,
+    TransactionInput,
+    TransactionId,
+)
 from pydantic import BaseModel
 
 from plutus_bench.mock import MockFrostApi
@@ -31,6 +36,12 @@ class Session:
 class SessionModel(BaseModel):
     creation_time: datetime.datetime
     last_access_time: datetime.datetime
+
+
+@dataclasses.dataclass
+class TransactionInputModel(BaseModel):
+    tx_id: bytes
+    output_index: int
 
 
 SESSIONS: Dict[uuid.UUID, Session] = {}
@@ -56,12 +67,8 @@ Refer to the [Blockfrost documentation](https://docs.blockfrost.io/) for more de
 @app.post("/session")
 def create_session(
     seed: int = 0,
-    protocol_parameters: dict = frozendict.frozendict(
-        dataclasses.asdict(DEFAULT_PROTOCOL_PARAMETERS)
-    ),
-    genesis_parameters: dict = frozendict.frozendict(
-        dataclasses.asdict(DEFAULT_GENESIS_PARAMETERS)
-    ),
+    protocol_parameters: dict = dataclasses.asdict(DEFAULT_PROTOCOL_PARAMETERS),
+    genesis_parameters: dict = dataclasses.asdict(DEFAULT_GENESIS_PARAMETERS),
 ) -> uuid.UUID:
     """
     Create a new session.
@@ -104,21 +111,28 @@ def delete_session(session_id: uuid.UUID) -> bool:
     return False
 
 
+def model_from_transaction_input(tx_in: TransactionInput):
+    return TransactionInputModel(
+        tx_id=tx_in.transaction_id.payload, output_index=tx_in.index
+    )
+
+
 @app.post("/{session_id}/ledger/txo")
-def add_transaction_output(session_id: uuid.UUID, tx_cbor: bytes) -> bytes:
+def add_transaction_output(
+    session_id: uuid.UUID, tx_cbor: bytes
+) -> TransactionInputModel:
     """
     Add a transaction output to the UTxO, without specifying the transaction hash and index (the "input").
     These will be created randomly and the corresponding CBOR is returned.
     """
-    return (
-        SESSIONS[session_id]
-        .chain_state.add_txout(pycardano.TransactionOutput.from_cbor(tx_cbor))
-        .to_cbor()
+    tx_in = SESSIONS[session_id].chain_state.add_txout(
+        pycardano.TransactionOutput.from_cbor(tx_cbor)
     )
+    return model_from_transaction_input(tx_in)
 
 
 @app.put("/{session_id}/ledger/utxo")
-def add_utxo(session_id: uuid.UUID, tx_cbor: bytes) -> bytes:
+def add_utxo(session_id: uuid.UUID, tx_cbor: bytes) -> TransactionInputModel:
     """
     Add a transaction output and input to the UTxO.
     Potentially overwrites existing inputs with the same transaction hash and index.
@@ -126,7 +140,26 @@ def add_utxo(session_id: uuid.UUID, tx_cbor: bytes) -> bytes:
     """
     utxo = pycardano.UTxO.from_cbor(tx_cbor)
     SESSIONS[session_id].chain_state.add_utxo(utxo)
-    return utxo.input.to_cbor()
+    return model_from_transaction_input(utxo.input)
+
+
+@app.delete("/{session_id}/ledger/txo")
+def delete_transaction_output(
+    session_id: uuid.UUID, tx_input: TransactionInputModel
+) -> bool:
+    """
+    Delete a transaction output from the UTxO.
+    Returns whether the transaction output was in the UTxO
+    """
+    try:
+        SESSIONS[session_id].chain_state.remove_txi(
+            TransactionInput(
+                transaction_id=TransactionId(tx_input.tx_id),
+                index=tx_input.output_index,
+            )
+        )
+    except:
+        return False
 
 
 @app.put("/{session_id}/ledger/slot")
