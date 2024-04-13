@@ -241,6 +241,8 @@ class MockFrostApi:
         return ret
 
     def evaluate_tx_cbor(self, cbor: Union[bytes, str]) -> Dict[str, ExecutionUnits]:
+        if isinstance(cbor, str):
+            cbor = bytes.fromhex(cbor)
         return self.evaluate_tx(Transaction.from_cbor(cbor))
 
     def get_utxo_from_txid(self, transaction_id: TransactionId, index: int) -> UTxO:
@@ -430,11 +432,11 @@ class MockFrostApi:
             tx_cbor = file.read()
         tx = Transaction.from_cbor(tx_cbor)
         self.submit_tx(tx)
-        return tx.id
+        return tx.id.payload.hex()
 
     @request_wrapper
     def transaction_evaluate(self, file_path: str, **kwargs):
-        with open(file_path, "rb") as file:
+        with open(file_path, "r") as file:
             tx_cbor = file.read()
         try:
             res = self.evaluate_tx_cbor(tx_cbor)

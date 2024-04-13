@@ -2,6 +2,7 @@ import pathlib
 
 import pycardano
 import pytest
+from pycardano import TransactionFailedException
 
 from plutus_bench import MockChainContext, MockUser
 from plutus_bench.mock import MockFrostApi
@@ -50,7 +51,7 @@ def test_other_user_spend_from_gift_contract():
         ),
     )
     pytest.raises(
-        RuntimeError,
+        TransactionFailedException,
         spend_from_gift_contract,
         payment_key.signing_key,
         gift_contract_path,
@@ -59,7 +60,7 @@ def test_other_user_spend_from_gift_contract():
         set_required_signers=True,
     )
     pytest.raises(
-        RuntimeError,
+        TransactionFailedException,
         spend_from_gift_contract,
         payment_key.signing_key,
         gift_contract_path,
