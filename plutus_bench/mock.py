@@ -437,17 +437,18 @@ class MockFrostApi:
         return l
 
     @request_wrapper
-    def transaction_submit(self, file_path: str, **kwargs):
-        with open(file_path, "rb") as file:
-            tx_cbor = file.read()
+    def transaction_submit_raw(self, tx_cbor: bytes, **kwargs):
         tx = Transaction.from_cbor(tx_cbor)
         self.submit_tx(tx)
         return tx.id.payload.hex()
 
-    @request_wrapper
-    def transaction_evaluate(self, file_path: str, **kwargs):
-        with open(file_path, "r") as file:
+    def transaction_submit(self, file_path: str, **kwargs):
+        with open(file_path, "rb") as file:
             tx_cbor = file.read()
+        return self.transaction_submit_raw(tx_cbor)
+
+    @request_wrapper
+    def transaction_evaluate_raw(self, tx_cbor: bytes, **kwargs):
         try:
             res = self.evaluate_tx_cbor(tx_cbor)
         except Exception as e:
@@ -468,6 +469,11 @@ class MockFrostApi:
                 }
             }
         }
+
+    def transaction_evaluate(self, file_path: str, **kwargs):
+        with open(file_path, "r") as file:
+            tx_cbor = file.read()
+        return self.transaction_evaluate_raw(tx_cbor)
 
 
 class MockChainContext(BlockFrostChainContext):

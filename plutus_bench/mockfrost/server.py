@@ -1,5 +1,6 @@
 import dataclasses
 import datetime
+import tempfile
 import uuid
 
 import frozendict
@@ -173,7 +174,7 @@ def set_slot(session_id: uuid.UUID, slot: int) -> int:
 
 
 @app.get("/{session_id}/api/v1/epochs/latest")
-def latest_epoch(session_id: uuid.UUID) -> Dict[str, int]:
+def latest_epoch(session_id: uuid.UUID) -> dict:
     """
     Return the information about the latest, therefore current, epoch.
 
@@ -184,9 +185,104 @@ def latest_epoch(session_id: uuid.UUID) -> Dict[str, int]:
 
 
 @app.get("/{session_id}/api/v1/blocks/latest")
-def latest_block(session_id: uuid.UUID) -> Dict[str, int]:
+def latest_block(session_id: uuid.UUID) -> dict:
     """
     Return the latest block available to the backends, also known as the tip of the blockchain.
 
     https://docs.blockfrost.io/#tag/Cardano-Blocks/paths/~1blocks~1latest/get
     """
+    return SESSIONS[session_id].chain_state.block_latest(return_type="json")
+
+
+@app.get("/{session_id}/api/v1/genesis")
+def genesis(session_id: uuid.UUID) -> dict:
+    """
+    Return the information about blockchain genesis.
+
+    https://docs.blockfrost.io/#tag/Cardano-Ledger/paths/~1genesis/get
+    """
+    return SESSIONS[session_id].chain_state.genesis(return_type="json")
+
+
+@app.get("/{session_id}/api/v1/epochs/parameters")
+def latest_epoch_protocol_parameters(session_id: uuid.UUID) -> dict:
+    """
+    Return the protocol parameters for the latest epoch.
+
+    https://docs.blockfrost.io/#tag/Cardano-Epochs/paths/~1epochs~1latest~1parameters/get
+    """
+    return SESSIONS[session_id].chain_state.epoch_latest_parameters(return_type="json")
+
+
+@app.get("/{session_id}/api/v1/scripts/{script_hash}")
+def specific_script(session_id: uuid.UUID, script_hash: str) -> dict:
+    """
+    Information about a specific script
+
+    https://docs.blockfrost.io/#tag/Cardano-Scripts/paths/~1scripts~1%7Bscript_hash%7D/get
+    """
+    return SESSIONS[session_id].chain_state.script(
+        script_hash=script_hash, return_type="json"
+    )
+
+
+@app.get("/{session_id}/api/v1/scripts/{script_hash}/cbor")
+def script_cbor(session_id: uuid.UUID, script_hash: str) -> dict:
+    """
+    CBOR representation of a `plutus` script
+
+    https://docs.blockfrost.io/#tag/Cardano-Scripts/paths/~1scripts~1%7Bscript_hash%7D~1cbor/get
+    """
+    return SESSIONS[session_id].chain_state.script_cbor(
+        script_hash=script_hash, return_type="json"
+    )
+
+
+@app.get("/{session_id}/api/v1/scripts/{script_hash}/json")
+def script_json(session_id: uuid.UUID, script_hash: str) -> dict:
+    """
+    JSON representation of a `timelock` script
+
+    https://docs.blockfrost.io/#tag/Cardano-Scripts/paths/~1scripts~1%7Bscript_hash%7D~1json/get
+    """
+    return SESSIONS[session_id].chain_state.script_cbor(
+        script_hash=script_hash, return_type="json"
+    )
+
+
+@app.get("/{session_id}/api/v1/addresses/{address}/utxos")
+def address_utxos(session_id: uuid.UUID, address: str) -> dict:
+    """
+    UTXOs of the address.
+
+    https://docs.blockfrost.io/#tag/Cardano-Addresses/paths/~1addresses~1%7Baddress%7D~1utxos/get
+    """
+    return SESSIONS[session_id].chain_state.address_utxos(
+        address=address, return_type="json"
+    )
+
+
+@app.post("/{session_id}/api/v1/tx/submit")
+def submit_a_transaction(session_id: uuid.UUID, transaction: bytes) -> dict:
+    """
+    Submit an already serialized transaction to the network.
+
+    https://docs.blockfrost.io/#tag/Cardano-Transactions/paths/~1tx~1submit/post
+    """
+    return SESSIONS[session_id].chain_state.transaction_submit_raw(
+        transaction, return_type="json"
+    )
+
+
+@app.post("/{session_id}/api/v1/utils/tx/evaluate")
+def submit_a_transaction_for_execution_units_evaluation(
+    session_id: uuid.UUID, transaction: bytes
+) -> dict:
+    """
+    Submit an already serialized transaction to evaluate how much execution units it requires
+
+    https://docs.blockfrost.io/#tag/Cardano-Utilities/paths/~1utils~1txs~1evaluate/post
+    """
+    return SESSIONS[session_id].chain_state.transaction_evaluate_raw(
+        transaction, return_type="json"
+    )
