@@ -34,7 +34,7 @@ transaction builder (such as the BlockFrostChainContext in PyCardano, Lucid, Mes
 The `/session` route provides you with additional tools to manipulate the state of the chain such as creating transaction outputs,
 spinning forward the time of the environment or changing the protocol parameters.
 
-Refer to the (Blockfrost documentation)[https://docs.blockfrost.io/] for more details about the `api/v1/` subroutes.
+Refer to the [Blockfrost documentation](https://docs.blockfrost.io/) for more details about the `api/v1/` subroutes.
 """,
 )
 
