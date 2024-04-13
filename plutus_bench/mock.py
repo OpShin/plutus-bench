@@ -1,10 +1,12 @@
 import random
 import traceback
 import uuid
+import warnings
 from collections import defaultdict
 from dataclasses import asdict
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import cbor2
 import pycardano
 from blockfrost import Namespace
 from blockfrost.utils import convert_json_to_object, convert_json_to_pandas
@@ -30,6 +32,11 @@ from pycardano import (
     PlutusV1Script,
     PlutusV2Script,
     ScriptHash,
+    BlockFrostChainContext,
+    RawCBOR,
+    RawPlutusData,
+    datum_hash,
+    default_encoder,
 )
 
 from .protocol_params import (
@@ -76,7 +83,7 @@ def script_type(script: bytes) -> str:
 
 
 def datum_to_cbor(d: pycardano.Datum) -> bytes:
-    return pycardano.PlutusData.to_cbor(d)
+    return cbor2.dumps(d, default=default_encoder)
 
 
 def evaluate_opshin_validator(validator: OpshinValidator, invocation: ScriptInvocation):
@@ -156,7 +163,8 @@ class MockFrostApi:
         self._address_lookup[utxo] = address
         self._utxo_from_txid[utxo.input.transaction_id][utxo.input.index] = utxo
         # TODO properly determine the script type
-        self._scripts[script_hash(utxo.output.script)] = utxo.output.script
+        if utxo.output.script:
+            self._scripts[script_hash(utxo.output.script)] = utxo.output.script
 
     def add_txout(self, txout: TransactionOutput) -> TransactionInput:
         """
@@ -255,7 +263,7 @@ class MockFrostApi:
     # These functions are supposed to overwrite the BlockFrost API
 
     @request_wrapper
-    def epoch_latest(self):
+    def epoch_latest(self, **kwargs):
         return {
             "epoch": self.epoch,
             # I suspect these values are not actually used by the client
@@ -279,7 +287,7 @@ class MockFrostApi:
         }
 
     @request_wrapper
-    def block_latest(self):
+    def block_latest(self, **kwargs):
         return {
             "time": self.posix_from_slot(self.last_block_slot),
             "height": self.last_block_slot,
@@ -301,11 +309,11 @@ class MockFrostApi:
         }
 
     @request_wrapper
-    def genesis(self):
+    def genesis(self, **kwargs):
         return asdict(self.genesis_param)
 
     @request_wrapper
-    def epoch_latest_parameters(self):
+    def epoch_latest_parameters(self, **kwargs):
         return {
             "min_fee_b": str(self._protocol_param.min_fee_constant),
             "min_fee_a": str(self._protocol_param.min_fee_coefficient),
@@ -341,7 +349,7 @@ class MockFrostApi:
         }
 
     @request_wrapper
-    def script(self, script_hash: str):
+    def script(self, script_hash: str, **kwargs):
         script_hash = ScriptHash(bytes.fromhex(script_hash))
         if script_hash not in self._scripts:
             raise ValueError("Script not found")
@@ -353,37 +361,47 @@ class MockFrostApi:
         }
 
     @request_wrapper
-    def script_cbor(self, script_hash: str):
+    def script_cbor(self, script_hash: str, **kwargs):
         script_hash = ScriptHash(bytes.fromhex(script_hash))
         if script_hash not in self._scripts:
             raise ValueError("Script not found")
         return {"cbor": self._scripts[script_hash].hex()}
 
     @request_wrapper
-    def script_json(self, script_hash: str):
+    def script_json(self, script_hash: str, **kwargs):
         script_hash = ScriptHash(bytes.fromhex(script_hash))
         if script_hash not in self._scripts:
             raise ValueError("Script not found")
         return {"json": self._scripts[script_hash].to_dict()}
 
     @request_wrapper
-    def address_utxos(self, address: str, gather_pages: bool = True):
+    def address_utxos(self, address: str, **kwargs):
         l = []
         for utxo in self._utxos(address):
-            amount_dict = {
-                "unit": "lovelace",
-                "quantity": utxo.output.amount.coin,
-            }
+            amount_list = [
+                {
+                    "unit": "lovelace",
+                    "quantity": str(utxo.output.amount.coin),
+                }
+            ]
+            for pid, asset in utxo.output.amount.multi_asset.items():
+                for name, amount in asset.items():
+                    amount_list.append(
+                        {
+                            "unit": (pid.payload + name.payload).hex(),
+                            "quantity": str(amount),
+                        }
+                    )
             l.append(
                 {
                     "address": address,
                     "tx_hash": utxo.input.transaction_id.payload.hex(),
                     "tx_index": utxo.input.index,  # TODO deprecated
                     "output_index": utxo.input.index,
-                    "amount": amount_dict,
+                    "amount": amount_list,
                     "block": "4ea1ba291e8eef538635a53e59fddba7810d1679631cc3aed7c8e6c4091a516a",
                     "data_hash": (
-                        utxo.output.datum.hash().payload.hex()
+                        datum_hash(utxo.output.datum).payload.hex()
                         if utxo.output.datum
                         else (
                             utxo.output.datum_hash.payload.hex()
@@ -392,16 +410,22 @@ class MockFrostApi:
                         )
                     ),
                     "inline_datum": (
-                        datum_to_cbor(utxo.output.datum) if utxo.output.datum else None
+                        datum_to_cbor(utxo.output.datum).hex()
+                        if utxo.output.datum
+                        else None
                     ),
-                    "reference_script_hash": utxo.output.script.hash().payload.hex(),
+                    "reference_script_hash": (
+                        utxo.output.script.hash().payload.hex()
+                        if utxo.output.script
+                        else None
+                    ),
                 }
             )
 
         return l
 
     @request_wrapper
-    def transaction_submit(self, file_path: str):
+    def transaction_submit(self, file_path: str, **kwargs):
         with open(file_path, "rb") as file:
             tx_cbor = file.read()
         tx = Transaction.from_cbor(tx_cbor)
@@ -409,58 +433,74 @@ class MockFrostApi:
         return tx.id
 
     @request_wrapper
-    def transaction_evaluate(self, file_path: str):
+    def transaction_evaluate(self, file_path: str, **kwargs):
         with open(file_path, "rb") as file:
             tx_cbor = file.read()
         try:
             res = self.evaluate_tx_cbor(tx_cbor)
         except Exception as e:
             return {
-                "EvaluationError": str(e),
-                "Trace": traceback.format_exception(e),
+                "result": {
+                    "EvaluationFailure": str(e),
+                    "Trace": traceback.format_exception(e),
+                }
             }
         return {
-            "EvaluationResult": {
-                k: {
-                    "steps": v.steps,
-                    "memory": v.mem,
+            "result": {
+                "EvaluationResult": {
+                    k: {
+                        "steps": v.steps,
+                        "memory": v.mem,
+                    }
+                    for k, v in res.items()
                 }
-                for k, v in res.items()
             }
         }
 
 
-def MockChainContext(
-    *args,
-    **kwargs,
-) -> ChainContext:
-    return ChainContext(
-        api=MockFrostApi(
-            *args,
-            **kwargs,
-        ),
-    )
+class MockChainContext(BlockFrostChainContext):
+    def __init__(
+        self,
+        api: Optional[MockFrostApi] = None,
+        network: Optional[Network] = None,
+    ):
+        if network is not None:
+            warnings.warn(
+                "`network` argument will be deprecated in the future. Directly passing `base_url` is recommended."
+            )
+            self._network = network
+        else:
+            self._network = Network.TESTNET
+
+        self._project_id = ""
+        self._base_url = ""
+        self.api = api or MockFrostApi()
+        self._epoch_info = self.api.epoch_latest()
+        self._epoch = None
+        self._genesis_param = None
+        self._protocol_param = None
 
 
 class MockUser:
-    def __init__(self, context: MockChainContext):
-        self.context = context
+    def __init__(self, api: MockFrostApi):
+        self.api = api
+        self.context = MockChainContext(self.api)
         self.signing_key = PaymentSigningKey.generate()
         self.verification_key = PaymentVerificationKey.from_signing_key(
             self.signing_key
         )
-        self.network = self.context.network
+        self.network = self.api.network
         self.address = Address(
             payment_part=self.verification_key.hash(), network=self.network
         )
 
     def fund(self, amount: Union[int, Value]):
-        self.context.add_txout(
+        self.api.add_txout(
             TransactionOutput(self.address, amount),
         )
 
     def utxos(self):
-        return self.context.utxos(self.address)
+        return MockChainContext(api=self.api).utxos(self.address)
 
     def balance(self) -> Value:
         return sum([utxo.output.amount for utxo in self.utxos()], start=Value())
