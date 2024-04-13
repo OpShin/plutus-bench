@@ -103,7 +103,6 @@ class MockFrostApi:
         genesis_param: Optional[GenesisParameters] = None,
         opshin_scripts: Optional[Dict[ScriptType, OpshinValidator]] = None,
         seed: int = 0,
-        start_epoch: int = 0,
     ):
         """
         A mock BlockFrost API that you can use for testing offchain code and evaluating scripts locally.
@@ -153,6 +152,10 @@ class MockFrostApi:
     @property
     def last_block_slot(self) -> int:
         return self._last_block_slot
+
+    def set_block_slot(self, slot: int):
+        self._last_block_slot = slot
+        self._epoch = self._last_block_slot // self._genesis_param.epoch_length
 
     def _utxos(self, address: str) -> List[UTxO]:
         return self._utxo_state.get(address, [])

@@ -1,13 +1,21 @@
 import dataclasses
 import datetime
 import uuid
-from typing import Union, Dict
+
+import frozendict
+from typing import Dict, Optional
 from multiprocessing import Manager
 
+import pycardano
 from fastapi import FastAPI
+from pycardano import ProtocolParameters, GenesisParameters
+from pydantic import BaseModel
 
-from plutus_bench import MockChainContext
 from plutus_bench.mock import MockFrostApi
+from plutus_bench.protocol_params import (
+    DEFAULT_PROTOCOL_PARAMETERS,
+    DEFAULT_GENESIS_PARAMETERS,
+)
 
 SESSION_MANAGER = Manager()
 
@@ -19,7 +27,13 @@ class Session:
     last_access_time: datetime.datetime
 
 
-SESSIONS: Dict[str, Session] = {}
+@dataclasses.dataclass
+class SessionModel(BaseModel):
+    creation_time: datetime.datetime
+    last_access_time: datetime.datetime
+
+
+SESSIONS: Dict[uuid.UUID, Session] = {}
 SESSIONS = SESSION_MANAGER.dict()
 
 
@@ -29,7 +43,7 @@ app = FastAPI(
     description="""
 Start by creating a session.
 You will receive a session id, which creates a unique fake blockchain state for you.
-Using the session id, you can use `/api/v1/<session_id>` as base url for any Blockfrost using
+Using the session id, you can use `/<session_id>/api/v1` as base url for any Blockfrost using
 transaction builder (such as the BlockFrostChainContext in PyCardano, Lucid, MeshJS etc).
 The `/session` route provides you with additional tools to manipulate the state of the chain such as creating transaction outputs,
 spinning forward the time of the environment or changing the protocol parameters.
@@ -39,39 +53,107 @@ Refer to the [Blockfrost documentation](https://docs.blockfrost.io/) for more de
 )
 
 
-@app.get("/session/create")
-def create_session() -> str:
+@app.post("/session")
+def create_session(
+    seed: int = 0,
+    protocol_parameters: dict = frozendict.frozendict(
+        dataclasses.asdict(DEFAULT_PROTOCOL_PARAMETERS)
+    ),
+    genesis_parameters: dict = frozendict.frozendict(
+        dataclasses.asdict(DEFAULT_GENESIS_PARAMETERS)
+    ),
+) -> uuid.UUID:
     """
     Create a new session.
     """
     session_id = uuid.uuid4()
-    SESSIONS[session_id.hex] = Session(
-        chain_state=MockFrostApi(seed=session_id.int),
+    SESSIONS[session_id] = Session(
+        chain_state=MockFrostApi(
+            protocol_param=ProtocolParameters(**protocol_parameters),
+            genesis_param=GenesisParameters(**genesis_parameters),
+            seed=seed,
+        ),
         creation_time=datetime.datetime.now(),
         last_access_time=datetime.datetime.now(),
     )
-    return session_id.hex
+    return session_id
 
 
-@app.get("/session/delete")
-def delete_session(session_id: str):
+@app.get("/session/{session_id}")
+def get_session_info(session_id: uuid.UUID) -> Optional[SessionModel]:
+    """
+    Remove a session after usage.
+    """
+    session = SESSIONS.get(session_id)
+    if not session:
+        return None
+    return SessionModel(
+        session.creation_time,
+        session.last_access_time,
+    )
+
+
+@app.delete("/session/{session_id}")
+def delete_session(session_id: uuid.UUID) -> bool:
     """
     Remove a session after usage.
     """
     if session_id in SESSIONS:
         del SESSIONS[session_id]
+        return True
+    return False
 
 
-@app.get("/api/v1/{session_id}/epochs/latest")
-def get_latest_epoch(session_id: str) -> Dict[str, int]:
+@app.post("/{session_id}/ledger/txo")
+def add_transaction_output(session_id: uuid.UUID, tx_cbor: bytes) -> bytes:
     """
-    Get the latest epoch.
+    Add a transaction output to the UTxO, without specifying the transaction hash and index (the "input").
+    These will be created randomly and the corresponding CBOR is returned.
+    """
+    return (
+        SESSIONS[session_id]
+        .chain_state.add_txout(pycardano.TransactionOutput.from_cbor(tx_cbor))
+        .to_cbor()
+    )
 
-    Args:
-        session_id (str): The session ID.
 
-    Returns:
-        dict: The latest epoch.
+@app.put("/{session_id}/ledger/utxo")
+def add_utxo(session_id: uuid.UUID, tx_cbor: bytes) -> bytes:
+    """
+    Add a transaction output and input to the UTxO.
+    Potentially overwrites existing inputs with the same transaction hash and index.
+    Returns the created transaction input.
+    """
+    utxo = pycardano.UTxO.from_cbor(tx_cbor)
+    SESSIONS[session_id].chain_state.add_utxo(utxo)
+    return utxo.input.to_cbor()
+
+
+@app.put("/{session_id}/ledger/slot")
+def set_slot(session_id: uuid.UUID, slot: int) -> int:
+    """
+    Set the current slot of the ledger to a specified value.
+    Essentially acts as a "time travel" tool.
+    """
+    SESSIONS[session_id].chain_state.set_block_slot(slot)
+    return slot
+
+
+@app.get("/{session_id}/api/v1/epochs/latest")
+def latest_epoch(session_id: uuid.UUID) -> Dict[str, int]:
+    """
+    Return the information about the latest, therefore current, epoch.
+
+    https://docs.blockfrost.io/#tag/Cardano-Epochs/paths/~1epochs~1latest/get
     """
     session = SESSIONS[session_id]
     return session.chain_state.epoch_latest(return_type="json")
+
+
+@app.get("/{session_id}/api/v1/blocks/latest")
+def latest_block(session_id: uuid.UUID) -> Dict[str, int]:
+    """
+    Return the latest block available to the backends, also known as the tip of the blockchain.
+
+    https://docs.blockfrost.io/#tag/Cardano-Blocks/paths/~1blocks~1latest/get
+    """

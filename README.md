@@ -38,11 +38,11 @@ Head to `http://localhost:8000/docs` to see the API documentation.
 Generally the workflow is as follows:
 
 - Create a new session with the `/session/create` endpoint. You receive a session ID.
-- Initialize a BlockFrost client in your off-chain code, and point it to the mock server. The base url is `http://localhost:8000/api/v1/<session-id>`. Project id is not required.
+- Initialize a BlockFrost client in your off-chain code, and point it to the mock server. The base url is `http://localhost:8000/<session-id>/api/v1`. Project id is not required.
 
 That's it! You can now interact with the mock ledger using the BlockFrost client.
 
-You may further manipulate the ledger using the `/ledger` endpoints.
+You may further manipulate the ledger using the `/<session-id>/ledger` endpoints.
 
 ### Similar Projects
 
