@@ -1,8 +1,13 @@
 import random
+import traceback
 import uuid
 from collections import defaultdict
+from dataclasses import asdict
 from typing import Any, Callable, Dict, List, Optional, Union
 
+import pycardano
+from blockfrost import Namespace
+from blockfrost.utils import convert_json_to_object, convert_json_to_pandas
 from pycardano import (
     Address,
     ChainContext,
@@ -20,6 +25,11 @@ from pycardano import (
     UTxO,
     Value,
     RedeemerTag,
+    script_hash,
+    NativeScript,
+    PlutusV1Script,
+    PlutusV2Script,
+    ScriptHash,
 )
 
 from .protocol_params import (
@@ -38,6 +48,37 @@ MintingPolicyType = Callable[[Any, Any], Any]
 OpshinValidator = Union[ValidatorType, MintingPolicyType]
 
 
+def request_wrapper(func):
+    def error_wrapper(*args, **kwargs):
+        request_response = func(*args, **kwargs)
+        if "return_type" in kwargs:
+            if kwargs["return_type"] == "object":
+                return convert_json_to_object(request_response)
+            elif kwargs["return_type"] == "pandas":
+                return convert_json_to_pandas(request_response)
+            elif kwargs["return_type"] == "json":
+                return request_response
+        else:
+            return convert_json_to_object(request_response)
+
+    return error_wrapper
+
+
+def script_type(script: bytes) -> str:
+    if isinstance(script, NativeScript):
+        return "timelock"
+    elif isinstance(script, PlutusV1Script):
+        return "plutusV1"
+    elif isinstance(script, PlutusV2Script) or type(script) is bytes:
+        return "plutusV2"
+    else:
+        return "unknown"
+
+
+def datum_to_cbor(d: pycardano.Datum) -> bytes:
+    return pycardano.PlutusData.to_cbor(d)
+
+
 def evaluate_opshin_validator(validator: OpshinValidator, invocation: ScriptInvocation):
     if invocation.redeemer.tag == RedeemerTag.SPEND:
         validator(invocation.datum, invocation.redeemer.data, invocation.script_context)
@@ -47,16 +88,18 @@ def evaluate_opshin_validator(validator: OpshinValidator, invocation: ScriptInvo
         raise NotImplementedError("Only spending and minting validators supported.")
 
 
-class MockChainContext(ChainContext):
+class MockFrostApi:
+
     def __init__(
         self,
         protocol_param: Optional[ProtocolParameters] = None,
         genesis_param: Optional[GenesisParameters] = None,
         opshin_scripts: Optional[Dict[ScriptType, OpshinValidator]] = None,
         seed: int = 0,
+        start_epoch: int = 0,
     ):
         """
-        A mock PyCardano ChainContext that you can use for testing offchain code and evaluating scripts locally.
+        A mock BlockFrost API that you can use for testing offchain code and evaluating scripts locally.
 
         Args:
             protocol_param: Cardano Node protocol parameters. Defaults to preview network parameters.
@@ -74,12 +117,15 @@ class MockChainContext(ChainContext):
             self.opshin_scripts = {}
         else:
             self.opshin_scripts = opshin_scripts
+        self._scripts: Dict[ScriptHash, ScriptType] = {}
         self._utxo_state: Dict[str, List[UTxO]] = defaultdict(list)
         self._address_lookup: Dict[UTxO, str] = {}
         self._utxo_from_txid: Dict[TransactionId, Dict[int, UTxO]] = defaultdict(dict)
         self._network = Network.TESTNET
         self._epoch = 0
         self._last_block_slot = 0
+
+    # these functions are convenience functions and for manipulating the state of the mock chain
 
     @property
     def protocol_param(self) -> ProtocolParameters:
@@ -109,15 +155,21 @@ class MockChainContext(ChainContext):
         self._utxo_state[address].append(utxo)
         self._address_lookup[utxo] = address
         self._utxo_from_txid[utxo.input.transaction_id][utxo.input.index] = utxo
+        # TODO properly determine the script type
+        self._scripts[script_hash(utxo.output.script)] = utxo.output.script
 
-    def add_txout(self, txout: TransactionOutput):
+    def add_txout(self, txout: TransactionOutput) -> TransactionInput:
         """
         Basically the same as add_utxo, but clarifies that the transaction id does not matter.
+
+        Returns:
+            The input that can be used to spend the output.
         """
         utxo = UTxO(
             TransactionInput(TransactionId(self.random.randbytes(32)), 0), txout
         )
         self.add_utxo(utxo)
+        return utxo.input
 
     def get_address(self, utxo: UTxO) -> str:
         return self._address_lookup[utxo]
@@ -128,9 +180,6 @@ class MockChainContext(ChainContext):
         del self._address_lookup[utxo]
         i = self._utxo_state[address].index(utxo)
         self._utxo_state[address].pop(i)
-
-    def get_utxo_from_txid(self, transaction_id: TransactionId, index: int) -> UTxO:
-        return self._utxo_from_txid[transaction_id][index]
 
     def submit_tx(self, tx: Transaction):
         self.evaluate_tx(tx)
@@ -186,8 +235,12 @@ class MockChainContext(ChainContext):
     def evaluate_tx_cbor(self, cbor: Union[bytes, str]) -> Dict[str, ExecutionUnits]:
         return self.evaluate_tx(Transaction.from_cbor(cbor))
 
+    def get_utxo_from_txid(self, transaction_id: TransactionId, index: int) -> UTxO:
+        return self._utxo_from_txid[transaction_id][index]
+
     def wait(self, slots):
         self._last_block_slot += slots
+        self._epoch = self._last_block_slot // self._genesis_param.epoch_length
 
     def posix_from_slot(self, slot: int) -> int:
         """Convert a slot to POSIX time (seconds)"""
@@ -198,6 +251,195 @@ class MockChainContext(ChainContext):
         return (
             posix - self.genesis_param.system_start
         ) // self.genesis_param.slot_length
+
+    # These functions are supposed to overwrite the BlockFrost API
+
+    @request_wrapper
+    def epoch_latest(self):
+        return {
+            "epoch": self.epoch,
+            # I suspect these values are not actually used by the client
+            "start_time": self.posix_from_slot(
+                self.epoch * self.genesis_param.epoch_length
+            ),
+            "end_time": self.posix_from_slot(
+                (self.epoch + 1) * self.genesis_param.epoch_length
+            ),
+            "first_block_time": self.posix_from_slot(
+                self.epoch * self.genesis_param.epoch_length
+            ),
+            "last_block_time": self.posix_from_slot(
+                (self.epoch + 1) * self.genesis_param.epoch_length
+            ),
+            "block_count": 0,
+            "tx_count": 0,
+            "output": 0,
+            "fees": 0,
+            "active_stake": 0,
+        }
+
+    @request_wrapper
+    def block_latest(self):
+        return {
+            "time": self.posix_from_slot(self.last_block_slot),
+            "height": self.last_block_slot,
+            "hash": "4ea1ba291e8eef538635a53e59fddba7810d1679631cc3aed7c8e6c4091a516a",
+            "slot": self.last_block_slot,
+            "epoch": self.epoch,
+            "epoch_slot": self.last_block_slot % self.genesis_param.epoch_length,
+            "slot_leader": "pool1pu5jlj4q9w9jlxeu370a3c9myx47md5j5m2str0naunn2qnikdy",
+            "size": 0,
+            "tx_count": 0,
+            "output": 0,
+            "fees": 0,
+            "block_vrf": "vrf_vk1wf2k6lhujezqcfe00l6zetxpnmh9n6mwhpmhm0dvfh3fxgmdnrfqkms8ty",
+            "op_cert": "da905277534faf75dae41732650568af545134ee08a3c0392dbefc8096ae177c",
+            "op_cert_counter": 0,
+            "previous_block": "4ea1ba291e8eef538635a53e59fddba7810d1679631cc3aed7c8e6c4091a516a",
+            "next_block": "4ea1ba291e8eef538635a53e59fddba7810d1679631cc3aed7c8e6c4091a516a",
+            "confirmations": 0,
+        }
+
+    @request_wrapper
+    def genesis(self):
+        return asdict(self.genesis_param)
+
+    @request_wrapper
+    def epoch_latest_parameters(self):
+        return {
+            "min_fee_b": str(self._protocol_param.min_fee_constant),
+            "min_fee_a": str(self._protocol_param.min_fee_coefficient),
+            "max_block_size": str(self._protocol_param.max_block_size),
+            "max_tx_size": str(self._protocol_param.max_tx_size),
+            "max_block_header_size": str(self._protocol_param.max_block_header_size),
+            "key_deposit": str(self._protocol_param.key_deposit),
+            "pool_deposit": str(self._protocol_param.pool_deposit),
+            "a0": str(self._protocol_param.pool_influence),
+            "rho": str(self._protocol_param.monetary_expansion),
+            "tau": str(self._protocol_param.treasury_expansion),
+            "decentralisation_param": str(self._protocol_param.decentralization_param),
+            "extra_entropy": self._protocol_param.extra_entropy,
+            "protocol_major_ver": str(self._protocol_param.protocol_major_version),
+            "protocol_minor_ver": str(self._protocol_param.protocol_minor_version),
+            "min_utxo": str(self._protocol_param.min_utxo),
+            "min_pool_cost": str(self._protocol_param.min_pool_cost),
+            "price_mem": str(self._protocol_param.price_mem),
+            "price_step": str(self._protocol_param.price_step),
+            "max_tx_ex_mem": str(self._protocol_param.max_tx_ex_mem),
+            "max_tx_ex_steps": str(self._protocol_param.max_tx_ex_steps),
+            "max_block_ex_mem": str(self._protocol_param.max_block_ex_mem),
+            "max_block_ex_steps": str(self._protocol_param.max_block_ex_steps),
+            "max_val_size": str(self._protocol_param.max_val_size),
+            "collateral_percent": str(self._protocol_param.collateral_percent),
+            "max_collateral_inputs": str(self._protocol_param.max_collateral_inputs),
+            "coins_per_utxo_word": str(self._protocol_param.coins_per_utxo_word),
+            "coins_per_utxo_size": str(self._protocol_param.coins_per_utxo_byte),
+            "cost_models": {
+                k: self._protocol_param.cost_models[k]
+                for k in self._protocol_param.cost_models
+            },
+        }
+
+    @request_wrapper
+    def script(self, script_hash: str):
+        script_hash = ScriptHash(bytes.fromhex(script_hash))
+        if script_hash not in self._scripts:
+            raise ValueError("Script not found")
+        script = self._scripts[script_hash]
+        return {
+            "type": script_type(script),
+            "script_hash": script_hash,
+            "serialized_size": len(script),
+        }
+
+    @request_wrapper
+    def script_cbor(self, script_hash: str):
+        script_hash = ScriptHash(bytes.fromhex(script_hash))
+        if script_hash not in self._scripts:
+            raise ValueError("Script not found")
+        return {"cbor": self._scripts[script_hash].hex()}
+
+    @request_wrapper
+    def script_json(self, script_hash: str):
+        script_hash = ScriptHash(bytes.fromhex(script_hash))
+        if script_hash not in self._scripts:
+            raise ValueError("Script not found")
+        return {"json": self._scripts[script_hash].to_dict()}
+
+    @request_wrapper
+    def address_utxos(self, address: str, gather_pages: bool = True):
+        l = []
+        for utxo in self._utxos(address):
+            amount_dict = {
+                "unit": "lovelace",
+                "quantity": utxo.output.amount.coin,
+            }
+            l.append(
+                {
+                    "address": address,
+                    "tx_hash": utxo.input.transaction_id.payload.hex(),
+                    "tx_index": utxo.input.index,  # TODO deprecated
+                    "output_index": utxo.input.index,
+                    "amount": amount_dict,
+                    "block": "4ea1ba291e8eef538635a53e59fddba7810d1679631cc3aed7c8e6c4091a516a",
+                    "data_hash": (
+                        utxo.output.datum.hash().payload.hex()
+                        if utxo.output.datum
+                        else (
+                            utxo.output.datum_hash.payload.hex()
+                            if utxo.output.datum_hash
+                            else None
+                        )
+                    ),
+                    "inline_datum": (
+                        datum_to_cbor(utxo.output.datum) if utxo.output.datum else None
+                    ),
+                    "reference_script_hash": utxo.output.script.hash().payload.hex(),
+                }
+            )
+
+        return l
+
+    @request_wrapper
+    def transaction_submit(self, file_path: str):
+        with open(file_path, "rb") as file:
+            tx_cbor = file.read()
+        tx = Transaction.from_cbor(tx_cbor)
+        self.submit_tx(tx)
+        return tx.id
+
+    @request_wrapper
+    def transaction_evaluate(self, file_path: str):
+        with open(file_path, "rb") as file:
+            tx_cbor = file.read()
+        try:
+            res = self.evaluate_tx_cbor(tx_cbor)
+        except Exception as e:
+            return {
+                "EvaluationError": str(e),
+                "Trace": traceback.format_exception(e),
+            }
+        return {
+            "EvaluationResult": {
+                k: {
+                    "steps": v.steps,
+                    "memory": v.mem,
+                }
+                for k, v in res.items()
+            }
+        }
+
+
+def MockChainContext(
+    *args,
+    **kwargs,
+) -> ChainContext:
+    return ChainContext(
+        api=MockFrostApi(
+            *args,
+            **kwargs,
+        ),
+    )
 
 
 class MockUser:
