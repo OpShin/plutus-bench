@@ -55,12 +55,12 @@ app = FastAPI(
     description="""
 Start by creating a session.
 You will receive a session id, which creates a unique fake blockchain state for you.
-Using the session id, you can use `/<session_id>/api/v1` as base url for any Blockfrost using
+Using the session id, you can use `/<session_id>/api/v0` as base url for any Blockfrost using
 transaction builder (such as the BlockFrostChainContext in PyCardano, Lucid, MeshJS etc).
 The `/session` route provides you with additional tools to manipulate the state of the chain such as creating transaction outputs,
 spinning forward the time of the environment or changing the protocol parameters.
 
-Refer to the [Blockfrost documentation](https://docs.blockfrost.io/) for more details about the `api/v1/` subroutes.
+Refer to the [Blockfrost documentation](https://docs.blockfrost.io/) for more details about the `api/v0/` subroutes.
 """,
 )
 
@@ -173,7 +173,7 @@ def set_slot(session_id: uuid.UUID, slot: int) -> int:
     return slot
 
 
-@app.get("/{session_id}/api/v1/epochs/latest")
+@app.get("/{session_id}/api/v0/epochs/latest")
 def latest_epoch(session_id: uuid.UUID) -> dict:
     """
     Return the information about the latest, therefore current, epoch.
@@ -184,7 +184,7 @@ def latest_epoch(session_id: uuid.UUID) -> dict:
     return session.chain_state.epoch_latest(return_type="json")
 
 
-@app.get("/{session_id}/api/v1/blocks/latest")
+@app.get("/{session_id}/api/v0/blocks/latest")
 def latest_block(session_id: uuid.UUID) -> dict:
     """
     Return the latest block available to the backends, also known as the tip of the blockchain.
@@ -194,7 +194,7 @@ def latest_block(session_id: uuid.UUID) -> dict:
     return SESSIONS[session_id].chain_state.block_latest(return_type="json")
 
 
-@app.get("/{session_id}/api/v1/genesis")
+@app.get("/{session_id}/api/v0/genesis")
 def genesis(session_id: uuid.UUID) -> dict:
     """
     Return the information about blockchain genesis.
@@ -204,7 +204,7 @@ def genesis(session_id: uuid.UUID) -> dict:
     return SESSIONS[session_id].chain_state.genesis(return_type="json")
 
 
-@app.get("/{session_id}/api/v1/epochs/parameters")
+@app.get("/{session_id}/api/v0/epochs/parameters")
 def latest_epoch_protocol_parameters(session_id: uuid.UUID) -> dict:
     """
     Return the protocol parameters for the latest epoch.
@@ -214,7 +214,7 @@ def latest_epoch_protocol_parameters(session_id: uuid.UUID) -> dict:
     return SESSIONS[session_id].chain_state.epoch_latest_parameters(return_type="json")
 
 
-@app.get("/{session_id}/api/v1/scripts/{script_hash}")
+@app.get("/{session_id}/api/v0/scripts/{script_hash}")
 def specific_script(session_id: uuid.UUID, script_hash: str) -> dict:
     """
     Information about a specific script
@@ -226,7 +226,7 @@ def specific_script(session_id: uuid.UUID, script_hash: str) -> dict:
     )
 
 
-@app.get("/{session_id}/api/v1/scripts/{script_hash}/cbor")
+@app.get("/{session_id}/api/v0/scripts/{script_hash}/cbor")
 def script_cbor(session_id: uuid.UUID, script_hash: str) -> dict:
     """
     CBOR representation of a `plutus` script
@@ -238,7 +238,7 @@ def script_cbor(session_id: uuid.UUID, script_hash: str) -> dict:
     )
 
 
-@app.get("/{session_id}/api/v1/scripts/{script_hash}/json")
+@app.get("/{session_id}/api/v0/scripts/{script_hash}/json")
 def script_json(session_id: uuid.UUID, script_hash: str) -> dict:
     """
     JSON representation of a `timelock` script
@@ -250,7 +250,7 @@ def script_json(session_id: uuid.UUID, script_hash: str) -> dict:
     )
 
 
-@app.get("/{session_id}/api/v1/addresses/{address}/utxos")
+@app.get("/{session_id}/api/v0/addresses/{address}/utxos")
 def address_utxos(session_id: uuid.UUID, address: str) -> dict:
     """
     UTXOs of the address.
@@ -262,7 +262,7 @@ def address_utxos(session_id: uuid.UUID, address: str) -> dict:
     )
 
 
-@app.post("/{session_id}/api/v1/tx/submit")
+@app.post("/{session_id}/api/v0/tx/submit")
 def submit_a_transaction(session_id: uuid.UUID, transaction: bytes) -> dict:
     """
     Submit an already serialized transaction to the network.
@@ -274,7 +274,7 @@ def submit_a_transaction(session_id: uuid.UUID, transaction: bytes) -> dict:
     )
 
 
-@app.post("/{session_id}/api/v1/utils/tx/evaluate")
+@app.post("/{session_id}/api/v0/utils/tx/evaluate")
 def submit_a_transaction_for_execution_units_evaluation(
     session_id: uuid.UUID, transaction: bytes
 ) -> dict:
