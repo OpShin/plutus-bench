@@ -13,6 +13,8 @@ uplc = "^1.0.4"
 pycardano = {git = "https://github.com/Python-Cardano/pycardano", branch = "main"}
 fastapi = "^0.110.1"
 uvicorn = "^0.29.0"
+starlette = "^0.37.2"
+httpx = "^0.27.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"

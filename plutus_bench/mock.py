@@ -518,7 +518,7 @@ class MockUser:
         )
 
     def utxos(self):
-        return MockChainContext(api=self.api).utxos(self.address)
+        return self.context.utxos(self.address)
 
     def balance(self) -> Value:
         return sum([utxo.output.amount for utxo in self.utxos()], start=Value())

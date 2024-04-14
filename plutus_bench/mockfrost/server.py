@@ -23,14 +23,15 @@ from plutus_bench.protocol_params import (
     DEFAULT_GENESIS_PARAMETERS,
 )
 
-SESSION_MANAGER = Manager()
-
 
 @dataclasses.dataclass
 class Session:
     chain_state: MockFrostApi
     creation_time: datetime.datetime
     last_access_time: datetime.datetime
+
+
+SESSIONS: Dict[uuid.UUID, "Session"] = {}
 
 
 @dataclasses.dataclass
@@ -45,10 +46,6 @@ class TransactionInputModel(BaseModel):
     output_index: int
 
 
-SESSIONS: Dict[uuid.UUID, Session] = {}
-SESSIONS = SESSION_MANAGER.dict()
-
-
 app = FastAPI(
     title="MockFrost API",
     summary="A clone of the important parts of the BlockFrost API which are used to evaluate transactions. Create your own mocked environment and execute transactions in it.",
@@ -61,6 +58,8 @@ The `/session` route provides you with additional tools to manipulate the state 
 spinning forward the time of the environment or changing the protocol parameters.
 
 Refer to the [Blockfrost documentation](https://docs.blockfrost.io/) for more details about the `api/v0/` subroutes.
+
+You can find more details about this project and the source code on [GitHub](https://github.com/opshin/plutus-bench).
 """,
 )
 
@@ -251,7 +250,7 @@ def script_json(session_id: uuid.UUID, script_hash: str) -> dict:
 
 
 @app.get("/{session_id}/api/v0/addresses/{address}/utxos")
-def address_utxos(session_id: uuid.UUID, address: str) -> dict:
+def address_utxos(session_id: uuid.UUID, address: str) -> list:
     """
     UTXOs of the address.
 
