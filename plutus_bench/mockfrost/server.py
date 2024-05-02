@@ -59,8 +59,18 @@ spinning forward the time of the environment or changing the protocol parameters
 Refer to the [Blockfrost documentation](https://docs.blockfrost.io/) for more details about the `api/v0/` subroutes.
 
 You can find more details about this project and the source code on [GitHub](https://github.com/opshin/plutus-bench).
+
+There are two variants of this documentation available:
+- [Swagger UI](/docs): A more interactive documentation with a UI.
+- [Redoc](/redoc): A more static documentation with a focus on readability.
 """,
 )
+from fastapi.responses import RedirectResponse
+
+
+@app.get("/", response_class=RedirectResponse, include_in_schema=False)
+async def redirect_fastapi():
+    return "/docs"
 
 
 @app.post("/session")
