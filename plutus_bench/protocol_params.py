@@ -1,11 +1,12 @@
 """
 Default parameters copied from preview testnet
 """
+from fractions import Fraction
 
 from pycardano import ProtocolParameters, GenesisParameters
 
 DEFAULT_GENESIS_PARAMETERS = GenesisParameters(
-    active_slots_coefficient=0.05,
+    active_slots_coefficient=Fraction("0.05"),
     update_quorum=5,
     max_lovelace_supply=45000000000000000,
     network_magic=2,
@@ -24,17 +25,17 @@ DEFAULT_PROTOCOL_PARAMETERS = ProtocolParameters(
     max_block_header_size=1100,
     key_deposit=2000000,
     pool_deposit=500000000,
-    pool_influence=0.3,
-    monetary_expansion=0.003,
-    treasury_expansion=0.2,
-    decentralization_param=0.0,
+    pool_influence=Fraction("0.3"),
+    monetary_expansion=Fraction("0.003"),
+    treasury_expansion=Fraction("0.2"),
+    decentralization_param=Fraction("0.0"),
     extra_entropy="",
     protocol_major_version=8,
     protocol_minor_version=0,
     min_utxo=1000000,
     min_pool_cost=340000000,
-    price_mem=0.0577,
-    price_step=7.21e-05,
+    price_mem=Fraction("0.0577"),
+    price_step=Fraction("7.21e-05"),
     max_tx_ex_mem=14000000,
     max_tx_ex_steps=10000000000,
     max_block_ex_mem=62000000,
