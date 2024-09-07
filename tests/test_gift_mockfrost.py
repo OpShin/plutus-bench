@@ -38,7 +38,7 @@ def test_spend_from_gift_contract(server):
     context = session.chain_context()
     payment_key = MockFrostUser(session)
     payment_key.fund(100_000_000)
-    gift_contract_path = own_path.parent / "gift.plutus"
+    gift_contract_path = own_path.parent / "build" / "gift" / "script.plutus"
     gift_address = address_from_script(
         load_contract(gift_contract_path, ScriptType.PlutusV2), network=context.network
     )
@@ -52,18 +52,19 @@ def test_spend_from_gift_contract(server):
     spend_from_gift_contract(payment_key.signing_key, gift_contract_path, context)
 
 
-def test_other_user_spend_from_gift_contract():
-    api = MockFrostApi()
-    context = MockChainContext(api)
-    payment_key = MockUser(api)
+def test_other_user_spend_from_gift_contract(server):
+    client = MockFrostClient(base_url="http://127.0.0.1:8000")
+    session = client.create_session()
+    context = session.chain_context()
+    payment_key = MockFrostUser(session)
     payment_key.fund(100_000_000)
 
-    owning_user = MockUser(api)
-    gift_contract_path = own_path.parent / "gift.plutus"
+    owning_user = MockFrostUser(session)
+    gift_contract_path = own_path.parent / "build" / "gift" / "script.plutus"
     gift_address = address_from_script(
         load_contract(gift_contract_path, ScriptType.PlutusV2), network=context.network
     )
-    api.add_txout(
+    session.add_txout(
         pycardano.TransactionOutput(
             address=gift_address,
             amount=pycardano.Value(coin=1000000),

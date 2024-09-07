@@ -46,7 +46,7 @@ def load_contract(
     elif plutus_version == ScriptType.PlutusV2:
         return pycardano.PlutusV2Script(script)
     else:
-        return pycardano.NativeScript(script)
+        raise ValueError(f"Unsupported script type {plutus_version}")
 
 
 def address_from_script(
