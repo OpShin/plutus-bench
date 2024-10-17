@@ -349,7 +349,7 @@ def generate_script_contexts_resolved(
                     for r in tx.transaction_witness_set.redeemer
                     if r.index == i and r.tag == RedeemerTag.MINT
                 ),
-                tx.transaction_witness_set,
+                tx.transaction_witness_set.redeemer,
             )
         except StopIteration:
             raise ValueError(
