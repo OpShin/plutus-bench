@@ -358,6 +358,9 @@ class MockFrostApi:
                 k: self._protocol_param.cost_models[k]
                 for k in self._protocol_param.cost_models
             },
+            "min_fee_ref_script_cost_per_byte": self._protocol_param.min_fee_reference_scripts[
+                "min_fee_ref_script_cost_per_byte"
+            ],
         }
 
     @request_wrapper

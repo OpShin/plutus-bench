@@ -150,7 +150,10 @@ def to_tx_in_info(i: pycardano.TransactionInput, o: pycardano.TransactionOutput)
     )
 
 
-def to_redeemer_purpose(r: pycardano.Redeemer, tx_body: pycardano.TransactionBody):
+def to_redeemer_purpose(
+    r: Union[pycardano.RedeemerKey, pycardano.Redeemer],
+    tx_body: pycardano.TransactionBody,
+):
     v = r.tag
     if v == pycardano.RedeemerTag.SPEND:
         spent_input = tx_body.inputs[r.index]
@@ -182,6 +185,7 @@ def to_tx_info(
     ]
     if tx.transaction_witness_set.plutus_data:
         datums += tx.transaction_witness_set.plutus_data
+
     redeemers = (
         tx.transaction_witness_set.redeemer
         if tx.transaction_witness_set.redeemer
@@ -208,7 +212,11 @@ def to_tx_info(
             if tx_body.required_signers
             else []
         ),
-        {to_redeemer_purpose(r, tx_body): r.data for r in redeemers},
+        (
+            {to_redeemer_purpose(k, tx_body): v.data for k, v in redeemers.items()}
+            if isinstance(redeemers, pycardano.RedeemerMap)
+            else {to_redeemer_purpose(r, tx_body): r.data for r in redeemers}
+        ),
         {pycardano.datum_hash(d).payload: d for d in datums},
         to_tx_id(tx_body.id),
     )
@@ -218,7 +226,7 @@ def to_tx_info(
 class ScriptInvocation:
     script: pycardano.ScriptType
     datum: Optional[pycardano.Datum]
-    redeemer: pycardano.Redeemer
+    redeemer: Union[pycardano.Redeemer, pycardano.RedeemerMap]
     script_context: ScriptContext
 
 
@@ -248,6 +256,19 @@ def generate_script_contexts(tx_builder: pycardano.TransactionBuilder):
     )
 
 
+def as_redeemer(
+    r: Union[pycardano.Redeemer, pycardano.RedeemerKey], redeemers: pycardano.Redeemers
+):
+    if isinstance(r, pycardano.RedeemerKey):
+        v = redeemers[r]
+        new_r = pycardano.Redeemer(data=v.data, ex_units=v.ex_units)
+        new_r.tag = r.tag
+        new_r.index = r.index
+        return new_r
+    else:
+        return r
+
+
 def generate_script_contexts_resolved(
     tx: pycardano.Transaction,
     resolved_inputs: List[UTxO],
@@ -266,10 +287,14 @@ def generate_script_contexts_resolved(
         if not isinstance(spending_input.output.address.payment_part, ScriptHash):
             continue
         try:
-            spending_redeemer = next(
-                r
-                for r in tx.transaction_witness_set.redeemer
-                if r.index == i and r.tag == RedeemerTag.SPEND
+            # Redeemers is Union[RedeemerMap, List[Redeemer]]
+            spending_redeemer = as_redeemer(
+                next(
+                    r
+                    for r in tx.transaction_witness_set.redeemer
+                    if r.index == i and r.tag == RedeemerTag.SPEND
+                ),
+                tx.transaction_witness_set.redeemer,
             )
         except (StopIteration, TypeError):
             raise ValueError(
@@ -318,10 +343,13 @@ def generate_script_contexts_resolved(
         )
     for i, minting_script_hash in enumerate(tx.transaction_body.mint or []):
         try:
-            minting_redeemer = next(
-                r
-                for r in tx.transaction_witness_set.redeemer
-                if r.index == i and r.tag == RedeemerTag.MINT
+            minting_redeemer = as_redeemer(
+                next(
+                    r
+                    for r in tx.transaction_witness_set.redeemer
+                    if r.index == i and r.tag == RedeemerTag.MINT
+                ),
+                tx.transaction_witness_set,
             )
         except StopIteration:
             raise ValueError(
