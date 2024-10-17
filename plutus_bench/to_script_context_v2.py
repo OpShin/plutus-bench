@@ -162,6 +162,6 @@ def to_tx_info(
             ]
             + tx.transaction_witness_set.plutus_data
         },
-        {pycardano.datum_hash(r): r for r in tx.transaction_witness_set.redeemer},
+        {pycardano.todo_datum_hash(r): r for r in tx.transaction_witness_set.redeemer},
         to_tx_id(tx_body.id),
     )
