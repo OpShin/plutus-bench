@@ -39,8 +39,15 @@ def test_mint_contract(server):
     minting_user = MockFrostUser(session)
     minting_user.fund(100_000_000)
 
-    mint_coin_with_contract('My_token', 100, minting_user.signing_key, minting_user.verification_key, context)
-   
+    mint_coin_with_contract(
+        "My_token",
+        100,
+        minting_user.signing_key,
+        minting_user.verification_key,
+        context,
+    )
+
+
 def test_wrong_signature_mint_contract(server):
     client = MockFrostClient(base_url="http://127.0.0.1:8000")
     session = client.create_session()
@@ -53,14 +60,15 @@ def test_wrong_signature_mint_contract(server):
     pytest.raises(
         TransactionFailedException,
         mint_coin_with_contract,
-        'My_token',
+        "My_token",
         100,
         minting_user.signing_key,
         other_user.verification_key,
-        context
+        context,
     )
+
 
 if __name__ == "__main__":
     test_mint_contract()
-    #test_spend_from_gift_contract()
-    #test_other_user_spend_from_gift_contract()
+    # test_spend_from_gift_contract()
+    # test_other_user_spend_from_gift_contract()

@@ -1,6 +1,7 @@
 """
 Default parameters copied from preview testnet
 """
+
 from fractions import Fraction
 
 from pycardano import ProtocolParameters, GenesisParameters

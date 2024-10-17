@@ -19,8 +19,14 @@ def test_mint_contract():
     minting_user = MockUser(api)
     minting_user.fund(100_000_000)
 
+    mint_coin_with_contract(
+        "My_token",
+        100,
+        minting_user.signing_key,
+        minting_user.verification_key,
+        context,
+    )
 
-    mint_coin_with_contract('My_token', 100, minting_user.signing_key, minting_user.verification_key, context)
 
 def test_wrong_signature_mint_contract():
     api = MockFrostApi()
@@ -32,12 +38,13 @@ def test_wrong_signature_mint_contract():
     pytest.raises(
         TransactionFailedException,
         mint_coin_with_contract,
-        'My_token',
+        "My_token",
         100,
         minting_user.signing_key,
         other_user.verification_key,
-        context
+        context,
     )
+
 
 if __name__ == "__main__":
     test_mint_contract()
