@@ -10,7 +10,7 @@ packages = [{include = "plutus_bench"}]
 [tool.poetry.dependencies]
 python = ">=3.10, <3.12"
 uplc = "^1.0.7"
-pycardano = {git = "https://github.com/Python-Cardano/pycardano", branch = "main"}
+pycardano = "^0.12.0"
 fastapi = "^0.110.1"
 uvicorn = "^0.29.0"
 starlette = "^0.37.2"
