@@ -1,6 +1,7 @@
 """
 Default parameters copied from preview testnet
 """
+
 from fractions import Fraction
 
 from pycardano import ProtocolParameters, GenesisParameters
@@ -392,5 +393,5 @@ DEFAULT_PROTOCOL_PARAMETERS = ProtocolParameters(
             "verifySchnorrSecp256k1Signature-memory-arguments": 10,
         },
     },
-    min_fee_reference_scripts = {'min_fee_ref_script_cost_per_byte': 15}
+    min_fee_reference_scripts={"min_fee_ref_script_cost_per_byte": 15},
 )
