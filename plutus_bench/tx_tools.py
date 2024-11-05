@@ -80,7 +80,29 @@ def to_tx_id(tx_id: pycardano.TransactionId):
 
 
 def to_dcert(c: pycardano.Certificate) -> DCert:
-    raise NotImplementedError("Can not convert certificates yet")
+    if isinstance(c, pycardano.StakeRegistration):
+        return DCertDelegRegKey(to_staking_hash(c.stake_credential.credential))
+    elif isinstance(c, pycardano.StakeDelegation):
+        return DCertDelegDelegate(
+            to_staking_hash(c.stake_credential.credential),
+            PubKeyHash(c.pool_keyhash.payload),
+        )
+    elif isinstance(c, pycardano.StakeDeregistration):
+        # TODO
+        raise NotImplementedError(
+            f"Certificates of type {type(c)} can not be converted yet"
+        )
+    elif isinstance(c, pycardano.PoolRegistration):
+        # TODO
+        raise NotImplementedError(
+            f"Certificates of type {type(c)} can not be converted yet"
+        )
+    elif isinstance(c, pycardano.PoolRetirement):
+        # TODO
+        raise NotImplementedError(
+            f"Certificates of type {type(c)} can not be converted yet"
+        )
+    raise NotImplementedError(f"Certificates of type {type(c)} are not implemented")
 
 
 def multiasset_to_value(ma: pycardano.MultiAsset) -> Value:
@@ -161,9 +183,9 @@ def to_redeemer_purpose(
     elif v == pycardano.RedeemerTag.MINT:
         minted_id = sorted(tx_body.mint.data.keys())[r.index]
         return Minting(PolicyId(minted_id.payload))
-    elif v == pycardano.RedeemerTag.CERT:
-        # TODO: fix redeemer purpose
-        return Certifying(None)
+    elif v == pycardano.RedeemerTag.CERTIFICATE:
+        certificate = tx_body.certificates[r.index]
+        return Certifying(to_dcert(certificate))
     elif v == pycardano.RedeemerTag.REWARD:
         # TODO: fix redeemer purpose
         return Rewarding(None)
@@ -374,6 +396,43 @@ def generate_script_contexts_resolved(
                 ScriptContext(
                     tx_info, Minting(pycardano.script_hash(minting_script).payload)
                 ),
+            )
+        )
+    for i, certificate in enumerate(tx.transaction_body.certificates or []):
+        try:
+            certificate_redeemer = as_redeemer(
+                next(
+                    r
+                    for r in tx.transaction_witness_set.redeemer
+                    if r.index == i and r.tag == RedeemerTag.CERTIFICATE
+                ),
+                tx.transaction_witness_set.redeemer,
+            )
+        except StopIteration:
+            if isinstance(certificate, pycardano.StakeRegistration):
+                #  TODO: Check can this always be skipped?
+                continue
+            raise ValueError(
+                f"Missing redeemer for certificate {i} (index or tag set incorrectly or missing redeemer)"
+            )
+        try:
+            certificate_script = next(
+                s
+                for s in tx.transaction_witness_set.plutus_v2_script
+                if plutus_script_hash(PlutusV2Script(s))
+                == certificate.stake_credential.credential
+            )
+        except StopIteration:
+            raise NotImplementedError(
+                "Can not validate spending of non plutus v2 script (or plutus v2 script is not in context)"
+            )
+
+        script_contexts.append(
+            ScriptInvocation(
+                certificate_script,
+                datum,
+                certificate_redeemer,
+                ScriptContext(tx_info, Certifying(to_dcert(certificate))),
             )
         )
     return script_contexts
