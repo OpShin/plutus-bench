@@ -49,3 +49,31 @@ def register_and_delegate(
     )
 
 
+def withdraw(
+    recipient_address: pycardano.Address,
+    recipient_amount: int,
+    delegator_skey: pycardano.SigningKey,
+    plutus_script: pycardano.PlutusV2Script,
+    context: ChainContext,
+):
+    # Rebuild stake_address and script_payment_address from skey and script
+    delegator_vkey_hash = delegator_skey.to_verification_key().hash()
+    script_hash = pycardano.plutus_script_hash(plutus_script)
+    stake_address = pycardano.Address(staking_part=script_hash, network=context.network)
+    script_payment_address = pycardano.Address(
+        payment_part=delegator_vkey_hash,
+        staking_part=script_hash,
+        network=context.network,
+    )
+
+    builder = pycardano.TransactionBuilder(context)
+    builder.add_input_address(script_payment_address)
+
+    # This assumes you are using blockfrost or blockfrost like api
+    amount = context.api.accounts(str(stake_address)).withdrawable_amount
+    builder.withdrawals = pycardano.Withdrawals({bytes(stake_address): int(amount)})
+
+    redeemer = pycardano.Redeemer(0)
+    builder.add_withdrawal_script(plutus_script, redeemer=redeemer)
+    builder.add_output(pycardano.TransactionOutput(recipient_address, recipient_amount))
+    tx = builder.build_and_sign([delegator_skey], script_payment_address)

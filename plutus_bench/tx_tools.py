@@ -186,9 +186,10 @@ def to_redeemer_purpose(
     elif v == pycardano.RedeemerTag.CERTIFICATE:
         certificate = tx_body.certificates[r.index]
         return Certifying(to_dcert(certificate))
-    elif v == pycardano.RedeemerTag.REWARD:
-        # TODO: fix redeemer purpose
-        return Rewarding(None)
+    elif v == pycardano.RedeemerTag.WITHDRAWAL:
+        withdrawal = sorted(tx_body.withdraws.keys())[r.index]
+        script_hash = pycardano.Address.from_primitive(withdrawal).staking_part
+        return Rewarding(to_staking_hash(script_hash))
     else:
         raise NotImplementedError()
 
@@ -435,6 +436,41 @@ def generate_script_contexts_resolved(
                 ScriptContext(tx_info, Certifying(to_dcert(certificate))),
             )
         )
+    for i, address in enumerate(sorted(tx.transaction_body.withdraws or {})):
+        try:
+            withdrawal_redeemer = as_redeemer(
+                next(
+                    r
+                    for r in tx.transaction_witness_set.redeemer
+                    if r.index == i and r.tag == RedeemerTag.WITHDRAWAL
+                ),
+                tx.transaction_witness_set.redeemer,
+            )
+        except StopIteration:
+            raise ValueError(
+                f"Missing redeemer for withdrawal {i} (index or tag set incorrectly or missing redeemer)"
+            )
+        script_hash = pycardano.Address.from_primitive(address).staking_part
+        try:
+            withdrawal_script = next(
+                s
+                for s in tx.transaction_witness_set.plutus_v2_script
+                if plutus_script_hash(PlutusV2Script(s)) == script_hash
+            )
+        except StopIteration:
+            raise NotImplementedError(
+                "Can not validate spending of non plutus v2 script (or plutus v2 script is not in context)"
+            )
+
+        script_contexts.append(
+            ScriptInvocation(
+                withdrawal_script,
+                datum,
+                withdrawal_redeemer,
+                ScriptContext(tx_info, Rewarding(to_staking_hash(script_hash))),
+            )
+        )
+
     return script_contexts
 
 
