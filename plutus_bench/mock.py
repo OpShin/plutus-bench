@@ -217,7 +217,7 @@ class MockFrostApi:
         for i, output in enumerate(tx.transaction_body.outputs):
             utxo = UTxO(TransactionInput(tx.id, i), output)
             self.add_utxo(utxo)
-        for certificate in tx.transaction_body.certificates:
+        for certificate in tx.transaction_body.certificates or []:
             if isinstance(certificate, pycardano.StakeRegistration):
                 reward_address = pycardano.Address(
                     staking_part=certificate.stake_credential.credential,
