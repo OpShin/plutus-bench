@@ -313,8 +313,8 @@ class MockFrostApi:
             posix - self.genesis_param.system_start
         ) // self.genesis_param.slot_length
 
-    def add_mock_pool(self, pool_id: PoolId):
-        self._pool_delegators[str(pool_id)] = []
+    def add_mock_pool(self, pool_id: str):
+        self._pool_delegators[pool_id] = []
 
     def get_controlled_amount(self, stake_address: str):
         total = 0
@@ -626,4 +626,4 @@ class MockPool:
             self.pool_key_hash = pycardano.PoolKeyHash.from_primitive(
                 bytes(decode(self.pool_id.value))
             )
-        self.api.add_mock_pool(self.pool_id)
+        self.api.add_mock_pool(str(self.pool_id))
