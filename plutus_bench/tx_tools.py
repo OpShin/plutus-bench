@@ -404,7 +404,7 @@ def generate_script_contexts_resolved(
             certificate_redeemer = as_redeemer(
                 next(
                     r
-                    for r in tx.transaction_witness_set.redeemer
+                    for r in tx.transaction_witness_set.redeemer or []
                     if r.index == i and r.tag == RedeemerTag.CERTIFICATE
                 ),
                 tx.transaction_witness_set.redeemer,

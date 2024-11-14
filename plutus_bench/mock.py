@@ -211,6 +211,17 @@ class MockFrostApi:
         self.submit_tx_mock(tx)
 
     def submit_tx_mock(self, tx: Transaction):
+        def is_witnessed(address: Union[bytes, pycardano.Address], witness_set: pycardano.TransactionWitnessSet) -> bool:
+            if isinstance(address, bytes):
+                address = pycardano.Address.from_primitive(address)
+            staking_part = address.staking_part
+            if isinstance(staking_part, pycardano.ScriptHash):
+                scripts = (witness_set.plutus_v1_script or []) + (witness_set.plutus_v2_script or []) + (witness_set.plutus_v3_script or [])
+                return staking_part in [pycardano.plutus_script_hash(s) for s in scripts]
+            else:
+                raise NotImplementedError()
+            
+
         for input in tx.transaction_body.inputs:
             utxo = self.get_utxo_from_txid(input.transaction_id, input.index)
             self.remove_utxo(utxo)
@@ -251,6 +262,17 @@ class MockFrostApi:
                 self._pool_delegators[str(pool_id)].append(
                     certificate.stake_credential.credential
                 )
+        for address in tx.transaction_body.withdraws or {}:
+            value = tx.transaction_body.withdraws[address]
+            stake_address = pycardano.Address.from_primitive(address)
+            assert is_witnessed(stake_address, tx.transaction_witness_set), f'Withdrawal from address {stake_address} is not witnessed'
+            assert str(stake_address) in self._reward_account, 'Address {stake_address} not registered'
+            rewards = self._reward_account[str(stake_address)]['delegation']['rewards']
+            assert rewards == value, 'All rewards must be withdrawn. Requested {value} but account contains {rewards}'
+            self._reward_account[str(stake_address)]['delegation']['rewards'] == 0
+
+
+
 
     def submit_tx_cbor(self, cbor: Union[bytes, str]):
         return self.submit_tx(Transaction.from_cbor(cbor))

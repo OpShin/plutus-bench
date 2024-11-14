@@ -13,6 +13,8 @@ def register_and_delegate(
     plutus_script: pycardano.PlutusV2Script,
     pool_id: PoolId,
     context: ChainContext,
+    reverse_cert_order=False,
+    add_certificate_script=True,
 ):
 
     delegator_vkey_hash = delegator_skey.to_verification_key().hash()
@@ -36,9 +38,13 @@ def register_and_delegate(
 
     builder = pycardano.TransactionBuilder(context)
     builder.add_input_address(delegator_address)
-    builder.certificates = [stake_registration, stake_delegation]
-    redeemer = pycardano.Redeemer(0)
-    builder.add_certificate_script(plutus_script, redeemer=redeemer)
+    if reverse_cert_order:
+        builder.certificates = [stake_delegation, stake_registration]
+    else:
+        builder.certificates = [stake_registration, stake_delegation]
+    if add_certificate_script:
+        redeemer = pycardano.Redeemer(0)
+        builder.add_certificate_script(plutus_script, redeemer=redeemer)
     tx = builder.build_and_sign(
         signing_keys=[delegator_skey],
         change_address=script_payment_address,
@@ -77,3 +83,5 @@ def withdraw(
     builder.add_withdrawal_script(plutus_script, redeemer=redeemer)
     builder.add_output(pycardano.TransactionOutput(recipient_address, recipient_amount))
     tx = builder.build_and_sign([delegator_skey], script_payment_address)
+    context.submit_tx(tx)
+    return dict(stake_address=stake_address)
