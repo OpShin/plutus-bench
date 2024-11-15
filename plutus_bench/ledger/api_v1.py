@@ -1,15 +1,15 @@
 """
-The PlutusV2 ledger API.
+The PlutusV1 ledger API.
 All classes involved in defining the ScriptContext passed by the node.
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Tuple
 
 from pycardano import Datum as Anything, PlutusData
 
 
-# Plutus V2
+# Plutus V1
 @dataclass(unsafe_hash=True)
 class TxId(PlutusData):
     """
@@ -184,26 +184,6 @@ Value = Dict[PolicyId, Dict[TokenName, int]]
 DatumHash = bytes
 
 
-@dataclass(unsafe_hash=True)
-class SomeDatumHash(PlutusData):
-    """
-    Indicates that there is a datum associated with this output, which has the given hash.
-    """
-
-    CONSTR_ID = 1
-    datum_hash: DatumHash
-
-
-@dataclass(unsafe_hash=True)
-class SomeScriptHash(PlutusData):
-    """
-    Indicates that there is a script associated with this output, which has the given hash.
-    """
-
-    CONSTR_ID = 0
-    script_hash: DatumHash
-
-
 # The abstract super type of any object in opshin.
 # Use if you don't know what kind of object is being passed or if it doesn't matter.
 BuiltinData = Anything
@@ -218,7 +198,7 @@ Datum = BuiltinData
 
 
 @dataclass(unsafe_hash=True)
-class NoOutputDatum(PlutusData):
+class NoDatumHash(PlutusData):
     """
     Indicates that there is no datum associated with an output
     """
@@ -227,36 +207,13 @@ class NoOutputDatum(PlutusData):
 
 
 @dataclass(unsafe_hash=True)
-class SomeOutputDatumHash(PlutusData):
+class SomeDatumHash(PlutusData):
     """
-    Indicates that there is an datum associated with an output, which has the attached hash
+    Indicates that there is an datum associated with an output, which has the given hash
     """
 
     CONSTR_ID = 1
     datum_hash: DatumHash
-
-
-@dataclass(unsafe_hash=True)
-class SomeOutputDatum(PlutusData):
-    """
-    Indicates that there is an datum associated with an output, which is inlined and equal to the attached datum
-    """
-
-    CONSTR_ID = 2
-    datum: Datum
-
-
-# Possible cases of datum association with an output
-OutputDatum = Union[NoOutputDatum, SomeOutputDatumHash, SomeOutputDatum]
-
-
-@dataclass(unsafe_hash=True)
-class NoScriptHash(PlutusData):
-    """
-    Indicates that there is no script associated with an output
-    """
-
-    CONSTR_ID = 1
 
 
 @dataclass(unsafe_hash=True)
@@ -273,8 +230,8 @@ class TxOut(PlutusData):
 
     address: Address
     value: Value
-    datum: OutputDatum
-    reference_script: Union[NoScriptHash, SomeScriptHash]
+    datum: Union[NoDatumHash, SomeDatumHash]  # Changes in V2 to allow inline datum
+    # reference_script: Union[NoScriptHash, SomeScriptHash] # added in V2
 
 
 @dataclass(unsafe_hash=True)
@@ -457,16 +414,16 @@ class TxInfo(PlutusData):
 
     CONSTR_ID = 0
     inputs: List[TxInInfo]
-    reference_inputs: List[TxInInfo]
+    # reference_inputs: List[TxInInfo]   # Added in V2
     outputs: List[TxOut]
     fee: Value
     mint: Value
     dcert: List[DCert]
-    wdrl: Dict[StakingCredential, int]
+    wdrl: List[Tuple[StakingCredential, int]]  # Changes to AssocMap in V2
     valid_range: POSIXTimeRange
     signatories: List[PubKeyHash]
-    redeemers: Dict[ScriptPurpose, Redeemer]
-    data: Dict[DatumHash, Datum]
+    # redeemers: Dict[ScriptPurpose, Redeemer] # Added in V2
+    data: List[Tuple[DatumHash, Datum]]  # Changes to AssocMap in V2
     id: TxId
 
 
