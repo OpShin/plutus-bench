@@ -12,9 +12,11 @@ def spend_from_gift_contract(
     context: ChainContext,
     enforce_true_owner: bool = True,
     set_required_signers: bool = True,
+    redeemer: pycardano.Redeemer = None,
+    script_type: pycardano.ScriptType = ScriptType.PlutusV2,
 ):
     network = context.network
-    gift_contract = load_contract(gift_contract_path, ScriptType.PlutusV2)
+    gift_contract = load_contract(gift_contract_path, script_type)
     script_address = address_from_script(gift_contract, network)
     payment_vkey_hash = payment_key.to_verification_key().hash()
     payment_address = pycardano.Address(payment_part=payment_vkey_hash, network=network)
@@ -42,7 +44,7 @@ def spend_from_gift_contract(
         spend_utxo,
         gift_contract,
         None,
-        pycardano.Redeemer(0),
+        pycardano.Redeemer(0) if not redeemer else redeemer,
     )
     tx = txbuilder.build_and_sign(
         signing_keys=[payment_key],
