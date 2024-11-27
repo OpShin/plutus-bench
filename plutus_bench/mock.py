@@ -228,7 +228,9 @@ class MockFrostApi:
                     pycardano.plutus_script_hash(s) for s in scripts
                 ]
             else:
-                raise NotImplementedError()
+                raise NotImplementedError(
+                    "Only ScriptHash is currently supported for address staking_part"
+                )
 
         for input in tx.transaction_body.inputs:
             utxo = self.get_utxo_from_txid(input.transaction_id, input.index)
@@ -308,6 +310,7 @@ class MockFrostApi:
         for invocation in script_invocations:
             # run opshin script if available
             if self.opshin_scripts.get(invocation.script) is not None:
+                raise NotImplementedError("This code never seems to be reached")
                 opshin_validator = self.opshin_scripts[invocation.script]
                 evaluate_opshin_validator(opshin_validator, invocation)
             redeemer = invocation.redeemer
