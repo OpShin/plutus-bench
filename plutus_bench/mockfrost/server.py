@@ -187,6 +187,24 @@ def set_slot(session_id: uuid.UUID, slot: int) -> int:
     return slot
 
 
+@app.put("/{session_id}/pools/pool")
+def add_pool(session_id: uuid.UUID, pool_id: Annotated[str, Body(embed=True)]) -> str:
+    """
+    Add a fake staking pool. This may be delegated to mimic rewards.
+    """
+    get_session(session_id).chain_state.add_mock_pool(pool_id)
+    return pool_id
+
+
+@app.put("/{session_id}/pools/distribute")
+def distribute_rewards(session_id: uuid.UUID, rewards: int) -> int:
+    """
+    Distributed rewards to staked accounts. Emulates the behaviour of reward distribution at epoch boundaries.
+    """
+    get_session(session_id).chain_state.distribute_rewards(rewards)
+    return rewards
+
+
 @app.get("/{session_id}/api/v0/epochs/latest")
 def latest_epoch(session_id: uuid.UUID) -> dict:
     """
@@ -305,4 +323,16 @@ def submit_a_transaction_for_execution_units_evaluation(
     """
     return get_session(session_id).chain_state.transaction_evaluate_raw(
         bytes.fromhex(transaction), return_type="json"
+    )
+
+
+@app.get("/{session_id}/api/v0/accounts/{stake_address}")
+def specific_account_address(session_id: uuid.UUID, stake_address: str) -> dict:
+    """
+    Obtain information about a specific stake account
+
+    https://docs.blockfrost.io/#tag/cardano--accounts/GET/accounts/{stake_address}
+    """
+    return get_session(session_id).chain_state.accounts(
+        stake_address=stake_address, return_type="json"
     )

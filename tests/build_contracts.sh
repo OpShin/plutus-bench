@@ -8,3 +8,4 @@ cd $DIR
 
 poetry run opshin build spending contracts/gift.py
 poetry run opshin build minting contracts/signed_mint.py
+poetry run opshin build rewarding contracts/unrealistic_staking.py

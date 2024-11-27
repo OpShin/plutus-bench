@@ -10,6 +10,8 @@ import cbor2
 import pycardano
 from blockfrost import Namespace
 from blockfrost.utils import convert_json_to_object, convert_json_to_pandas
+from pycardano.crypto.bech32 import decode, encode
+from pycardano.pool_params import PoolId
 from pycardano import (
     Address,
     ChainContext,
@@ -37,6 +39,8 @@ from pycardano import (
     RawPlutusData,
     datum_hash,
     default_encoder,
+    StakeKeyPair,
+    StakeVerificationKey,
 )
 
 from .protocol_params import (
@@ -132,6 +136,9 @@ class MockFrostApi:
         self._network = Network.TESTNET
         self._epoch = 0
         self._last_block_slot = 0
+        self._pool_delegators: Dict[str, list] = {}
+        self._accounts: Dict[str, dict] = {}
+        self._reward_account: Dict[str, dict] = {}
 
     # these functions are convenience functions and for manipulating the state of the mock chain
 
@@ -204,12 +211,79 @@ class MockFrostApi:
         self.submit_tx_mock(tx)
 
     def submit_tx_mock(self, tx: Transaction):
+        def is_witnessed(
+            address: Union[bytes, pycardano.Address],
+            witness_set: pycardano.TransactionWitnessSet,
+        ) -> bool:
+            if isinstance(address, bytes):
+                address = pycardano.Address.from_primitive(address)
+            staking_part = address.staking_part
+            if isinstance(staking_part, pycardano.ScriptHash):
+                scripts = (
+                    (witness_set.plutus_v1_script or [])
+                    + (witness_set.plutus_v2_script or [])
+                    + (witness_set.plutus_v3_script or [])
+                )
+                return staking_part in [
+                    pycardano.plutus_script_hash(s) for s in scripts
+                ]
+            else:
+                raise NotImplementedError()
+
         for input in tx.transaction_body.inputs:
             utxo = self.get_utxo_from_txid(input.transaction_id, input.index)
             self.remove_utxo(utxo)
         for i, output in enumerate(tx.transaction_body.outputs):
             utxo = UTxO(TransactionInput(tx.id, i), output)
             self.add_utxo(utxo)
+        for certificate in tx.transaction_body.certificates or []:
+            if isinstance(certificate, pycardano.StakeRegistration):
+                reward_address = pycardano.Address(
+                    staking_part=certificate.stake_credential.credential,
+                    network=self.network,
+                ).encode()
+                if reward_address in self._reward_account:
+                    assert (
+                        self._reward_account["registered_stake"] == False
+                    ), f"Stake key is already registered. Reward address: {reward_address}"
+                    self._reward_account[reward_address]["registered_stake"] = True
+                else:
+                    self._reward_account[reward_address] = {
+                        "registered_stake": True,
+                        "delegation": {"pool_id": None, "rewards": 0},
+                    }
+            elif isinstance(certificate, pycardano.StakeDelegation):
+                reward_address = pycardano.Address(
+                    staking_part=certificate.stake_credential.credential,
+                    network=self.network,
+                ).encode()
+                assert (
+                    reward_address in self._reward_account
+                ), f"Stake key is not registered. Reward address: {reward_address}"
+                pool_id = PoolId(encode("pool", bytes(certificate.pool_keyhash)))
+                assert (
+                    str(pool_id) in self._pool_delegators
+                ), f"Pool not found, PoolId: {pool_id}"
+                self._reward_account[reward_address]["delegation"]["pool_id"] = str(
+                    pool_id
+                )
+                self._pool_delegators[str(pool_id)].append(
+                    certificate.stake_credential.credential
+                )
+        for address in tx.transaction_body.withdraws or {}:
+            value = tx.transaction_body.withdraws[address]
+            stake_address = pycardano.Address.from_primitive(address)
+            assert is_witnessed(
+                stake_address, tx.transaction_witness_set
+            ), f"Withdrawal from address {stake_address} is not witnessed"
+            assert (
+                str(stake_address) in self._reward_account
+            ), "Address {stake_address} not registered"
+            rewards = self._reward_account[str(stake_address)]["delegation"]["rewards"]
+            assert (
+                rewards == value
+            ), "All rewards must be withdrawn. Requested {value} but account contains {rewards}"
+            self._reward_account[str(stake_address)]["delegation"]["rewards"] == 0
 
     def submit_tx_cbor(self, cbor: Union[bytes, str]):
         return self.submit_tx(Transaction.from_cbor(cbor))
@@ -271,6 +345,27 @@ class MockFrostApi:
         return (
             posix - self.genesis_param.system_start
         ) // self.genesis_param.slot_length
+
+    def add_mock_pool(self, pool_id: str):
+        self._pool_delegators[pool_id] = []
+
+    def get_controlled_amount(self, stake_address: str):
+        total = 0
+        credential = pycardano.Address.from_primitive(stake_address).staking_part
+        for address, utxos in self._utxo_state.items():
+            staking_part = pycardano.Address.from_primitive(address).staking_part
+            if staking_part == credential:
+                for utxo in utxos:
+                    total += utxo.output.amount.coin
+        total += self._reward_account[stake_address]["delegation"]["rewards"]
+        return total
+
+    def distribute_rewards(self, rewards: int):
+        """Emulate behaviour of reward distribution at epoch boundaries"""
+        for reward_address, account in self._reward_account.items():
+            delegation = account["delegation"]
+            if account["registered_stake"] and delegation["pool_id"]:
+                delegation["rewards"] += rewards
 
     # These functions are supposed to overwrite the BlockFrost API
 
@@ -478,6 +573,29 @@ class MockFrostApi:
             tx_cbor = file.read()
         return self.transaction_evaluate_raw(tx_cbor)
 
+    @request_wrapper
+    def accounts(self, stake_address: str, **kwargs):
+        """
+        :param stake_address: Bech32 stake address.
+        :type stake_address: str
+        :returns object.
+        """
+        reward = self._reward_account[stake_address]
+        delegation = reward["delegation"]
+        mock_data = {
+            "stake_address": stake_address,
+            "active": reward["registered_stake"],
+            "active_epoch": self._epoch,
+            "controlled_amount": str(self.get_controlled_amount(stake_address)),
+            "rewards_sum": "0",
+            "withdrawals_sum": "0",
+            "reserves_sum": "0",
+            "treasury_sum": "0",
+            "withdrawable_amount": str(delegation.get("rewards", 0)),
+            "pool_id": delegation.get("pool_id", None),
+        }
+        return mock_data
+
 
 class MockChainContext(BlockFrostChainContext):
     def __init__(
@@ -525,3 +643,20 @@ class MockUser:
 
     def balance(self) -> Value:
         return sum([utxo.output.amount for utxo in self.utxos()], start=Value())
+
+
+class MockPool:
+    def __init__(self, api: MockFrostApi, pool_id: PoolId = None):
+        self.api = api
+        self.context = MockChainContext(self.api)
+
+        if pool_id is None:
+            self.key_pair = pycardano.StakePoolKeyPair.generate()
+            self.pool_key_hash = self.key_pair.verification_key.hash()
+            self.pool_id = PoolId(encode("pool", bytes(self.pool_key_hash)))
+        else:
+            self.pool_id = pool_id
+            self.pool_key_hash = pycardano.PoolKeyHash.from_primitive(
+                bytes(decode(self.pool_id.value))
+            )
+        self.api.add_mock_pool(str(self.pool_id))

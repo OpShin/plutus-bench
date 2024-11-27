@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from typing import Union
 
 import requests
+from pycardano.pool_params import PoolId
+from pycardano.crypto.bech32 import decode, encode
 from pycardano import (
     TransactionOutput,
     UTxO,
@@ -13,6 +15,8 @@ from pycardano import (
     PaymentVerificationKey,
     Address,
     Value,
+    StakePoolKeyPair,
+    PoolKeyHash,
 )
 from blockfrost import BlockFrostApi
 
@@ -62,6 +66,16 @@ class MockFrostSession:
             project_id="",
             network=network,
             base_url=self.client.base_url + "/" + self.session_id + "/api",
+        )
+
+    def add_mock_pool(self, pool_id: PoolId) -> str:
+        return self.client._put(
+            f"/{self.session_id}/pools/pool", json={"pool_id": pool_id.value}
+        )
+
+    def distribute_rewards(self, rewards: int) -> int:
+        return self.client._put(
+            f"/{self.session_id}/pools/distribute", json={"rewards": rewards}
         )
 
 
@@ -121,3 +135,22 @@ class MockFrostUser:
 
     def balance(self) -> Value:
         return sum([utxo.output.amount for utxo in self.utxos()], start=Value())
+
+
+class MockFrostPool:
+    def __init__(
+        self, api: MockFrostSession, pool_id: PoolId = None, network=Network.TESTNET
+    ):
+        self.network = network
+        self.api = api
+
+        if pool_id is None:
+            self.key_pair = StakePoolKeyPair.generate()
+            self.pool_key_hash = self.key_pair.verification_key.hash()
+            self.pool_id = PoolId(encode("pool", bytes(self.pool_key_hash)))
+        else:
+            self.pool_id = pool_id
+            self.pool_key_hash = PoolKeyHash.from_primitive(
+                bytes(decode(self.pool_id.value))
+            )
+        self.api.add_mock_pool(self.pool_id)
