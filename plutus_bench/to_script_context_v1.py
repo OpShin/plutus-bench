@@ -40,7 +40,7 @@ def to_wdrl(wdrl: Optional[pycardano.Withdrawals]) -> Dict[StakingCredential, in
         sk = pycardano.Address.from_primitive(k).staking_part
         return to_staking_hash(sk)
 
-    return [(m(key), val) for key, val in wdrl.to_primitive().items()]
+    return [WdrlPair(m(key), val) for key, val in wdrl.to_primitive().items()]
     # return {m(key): val for key, val in wdrl.to_primitive().items()}
 
 
@@ -223,7 +223,7 @@ def to_tx_info(
         #    if isinstance(redeemers, pycardano.RedeemerMap)
         #    else {to_redeemer_purpose(r, tx_body): r.data for r in redeemers}
         # ),
-        [(pycardano.datum_hash(d).payload, d) for d in datums],
+        [DatumPair(pycardano.datum_hash(d).payload, d) for d in datums],
         to_tx_id(tx_body.id),
     )
 

@@ -18,7 +18,7 @@ def test_fortytwo_v1_script():
     context = MockChainContext(api=api)
     giver = MockUser(api)
     giver.fund(100_000_000)
-    gift_contract_path = own_path.parent / "contracts/fortytwo.cbor"
+    gift_contract_path = own_path.parent / "assets/fortytwo.plutus"
     with open(gift_contract_path, "r") as f:
         script_hex = f.read()
         forty_two_script = cbor2.loads(bytes.fromhex(script_hex))

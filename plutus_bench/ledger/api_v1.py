@@ -203,7 +203,7 @@ class NoDatumHash(PlutusData):
     Indicates that there is no datum associated with an output
     """
 
-    CONSTR_ID = 0
+    CONSTR_ID = 1
 
 
 @dataclass(unsafe_hash=True)
@@ -212,7 +212,7 @@ class SomeDatumHash(PlutusData):
     Indicates that there is an datum associated with an output, which has the given hash
     """
 
-    CONSTR_ID = 1
+    CONSTR_ID = 0
     datum_hash: DatumHash
 
 
@@ -406,6 +406,20 @@ ScriptPurpose = Union[Minting, Spending, Rewarding, Certifying]
 
 
 @dataclass(unsafe_hash=True)
+class DatumPair(PlutusData):
+    CONSTR_ID = 0
+    datumHash: DatumHash
+    datum: Datum
+
+
+@dataclass(unsafe_hash=True)
+class WdrlPair(PlutusData):
+    CONSTR_ID = 0
+    stakingCredential: StakingCredential
+    amount: int
+
+
+@dataclass(unsafe_hash=True)
 class TxInfo(PlutusData):
     """
     A complex agglomeration of everything that could be of interest to the executed script, regarding the transaction
@@ -419,11 +433,11 @@ class TxInfo(PlutusData):
     fee: Value
     mint: Value
     dcert: List[DCert]
-    wdrl: List[Tuple[StakingCredential, int]]  # Changes to AssocMap in V2
+    wdrl: List[WdrlPair]  # Changes to AssocMap in V2
     valid_range: POSIXTimeRange
     signatories: List[PubKeyHash]
     # redeemers: Dict[ScriptPurpose, Redeemer] # Added in V2
-    data: List[Tuple[DatumHash, Datum]]  # Changes to AssocMap in V2
+    data: List[DatumPair]  # Changes to AssocMap in V2
     id: TxId
 
 
