@@ -1,7 +1,7 @@
 from typing import Optional, Tuple
 
 import pycardano
-from .ledger.api_v2 import *
+from .ledger.api_v1 import *
 
 
 def to_staking_credential(
@@ -34,13 +34,14 @@ def to_staking_hash(
 
 def to_wdrl(wdrl: Optional[pycardano.Withdrawals]) -> Dict[StakingCredential, int]:
     if wdrl is None:
-        return {}
+        return []
 
     def m(k: bytes):
         sk = pycardano.Address.from_primitive(k).staking_part
         return to_staking_hash(sk)
 
-    return {m(key): val for key, val in wdrl.to_primitive().items()}
+    return [WdrlPair(m(key), val) for key, val in wdrl.to_primitive().items()]
+    # return {m(key): val for key, val in wdrl.to_primitive().items()}
 
 
 def to_valid_range(validity_start: Optional[int], ttl: Optional[int], posix_from_slot):
@@ -126,21 +127,17 @@ def to_address(a: pycardano.Address):
 
 
 def to_tx_out(o: pycardano.TransactionOutput):
-    if o.datum is not None:
-        output_datum = SomeOutputDatum(o.datum)
-    elif o.datum_hash is not None:
-        output_datum = SomeOutputDatumHash(o.datum_hash.payload)
+    # if o.datum is not None:
+    #    output_datum = SomeOutputDatum(o.datum)
+    assert o.datum is None, "TxOut datum not supported in plutus v1"
+    if o.datum_hash is not None:
+        output_datum = SomeDatumHash(o.datum_hash.payload)
     else:
-        output_datum = NoOutputDatum()
-    if o.script is None:
-        script = NoScriptHash()
-    else:
-        script = SomeScriptHash(pycardano.script_hash(o.script).payload)
+        output_datum = NoDatumHash()
     return TxOut(
         to_address(o.address),
         value_to_value(o.amount),
         output_datum,
-        script,
     )
 
 
@@ -202,14 +199,14 @@ def to_tx_info(
     )
     return TxInfo(
         [to_tx_in_info(i, o) for i, o in zip(tx_body.inputs, resolved_inputs)],
-        (
-            [
-                to_tx_in_info(i, o)
-                for i, o in zip(tx_body.reference_inputs, resolved_reference_inputs)
-            ]
-            if tx_body.reference_inputs is not None
-            else []
-        ),
+        # (
+        #    [
+        #        to_tx_in_info(i, o)
+        #        for i, o in zip(tx_body.reference_inputs, resolved_reference_inputs)
+        #    ]
+        #    if tx_body.reference_inputs is not None
+        #    else []
+        # ),
         [to_tx_out(o) for o in tx_body.outputs],
         value_to_value(pycardano.Value(tx_body.fee)),
         multiasset_to_value(tx_body.mint),
@@ -221,12 +218,12 @@ def to_tx_info(
             if tx_body.required_signers
             else []
         ),
-        (
-            {to_redeemer_purpose(k, tx_body): v.data for k, v in redeemers.items()}
-            if isinstance(redeemers, pycardano.RedeemerMap)
-            else {to_redeemer_purpose(r, tx_body): r.data for r in redeemers}
-        ),
-        {pycardano.datum_hash(d).payload: d for d in datums},
+        # (
+        #    {to_redeemer_purpose(k, tx_body): v.data for k, v in redeemers.items()}
+        #    if isinstance(redeemers, pycardano.RedeemerMap)
+        #    else {to_redeemer_purpose(r, tx_body): r.data for r in redeemers}
+        # ),
+        [DatumPair(pycardano.datum_hash(d).payload, d) for d in datums],
         to_tx_id(tx_body.id),
     )
 

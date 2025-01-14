@@ -18,7 +18,7 @@ def test_spend_from_gift_contract():
     context = MockChainContext(api=api)
     payment_key = MockUser(api)
     payment_key.fund(100_000_000)
-    gift_contract_path = own_path.parent / "gift.plutus"
+    gift_contract_path = own_path.parent / "assets/gift.plutus"
     gift_address = address_from_script(
         load_contract(gift_contract_path, ScriptType.PlutusV2), network=context.network
     )
