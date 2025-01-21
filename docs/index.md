@@ -4,3 +4,9 @@
 
 layout: home
 ---
+
+[What is Plutus-Bench all about](./about.md)
+
+[Installing Plutus-Bench](./installation.md)
+
+[A quick guide to basic usage](./usage.md)
