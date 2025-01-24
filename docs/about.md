@@ -2,10 +2,11 @@
 layout: page
 title: About
 permalink: /about/
+nav_order: 1
 ---
 
 <div align="center">
-<img alt="A person with the Cardano logo as face, lifting heavy weights" src="/assets/plutus-bench.png" width="240" />
+<img alt="A person with the Cardano logo as face, lifting heavy weights" src="{{ '/assets/plutus-bench.png' | relative_url }}" width="240" />
 <h1>Plutus-Bench</h1>
 </div>
 
