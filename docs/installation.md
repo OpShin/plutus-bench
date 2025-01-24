@@ -1,7 +1,7 @@
 ---
-layout: page
 title: Installation
 permalink: /install/
+nav_order: 2
 ---
 
 <div align="center">
@@ -9,7 +9,7 @@ permalink: /install/
 </div>
 
 Plutus-Bench is currently not available via any package managers.
-Cloning the github Repo and manually installing with pip is the current recommended method.
+Cloning the github Repo and manually installing with pip is the current recommended method:
 
 ```bash
 # clone the plutus-bench package

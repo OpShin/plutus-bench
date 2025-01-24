@@ -18,7 +18,7 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 
-title: Mockfrost Documentation
+title: Plutus-Bench Documentation
 #email: your-email@example.com
 description: >- # this means to ignore newlines until "baseurl:"
   Test and benchmark Plutus Smart Contracts. This project enables you to construct 
@@ -51,3 +51,11 @@ plugins:
 #   - vendor/cache/
 #   - vendor/gems/
 #   - vendor/ruby/
+
+
+nav_external_links:
+  - title: MockFrost API
+    url: https://mockfrost.dev/redoc
+    hide_icon: false
+    opens_in_new_tab: false
+
