@@ -111,8 +111,8 @@ def get_session_info(session_id: uuid.UUID) -> Optional[SessionModel]:
     if not session:
         return None
     return SessionModel(
-        session.creation_time,
-        session.last_access_time,
+        creation_time=session.creation_time,
+        last_access_time=session.last_access_time,
     )
 
 
