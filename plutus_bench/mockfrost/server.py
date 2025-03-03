@@ -83,9 +83,9 @@ def create_session(
     Create a new session.
     Sets all parameters not specified in protocol and genesis to their default values.
     """
-    protocol_parameters = frozendict.frozendict(protocol_parameters) | dataclasses.asdict(
-        DEFAULT_PROTOCOL_PARAMETERS
-    )
+    protocol_parameters = frozendict.frozendict(
+        protocol_parameters
+    ) | dataclasses.asdict(DEFAULT_PROTOCOL_PARAMETERS)
     genesis_parameters = frozendict.frozendict(genesis_parameters) | dataclasses.asdict(
         DEFAULT_GENESIS_PARAMETERS
     )

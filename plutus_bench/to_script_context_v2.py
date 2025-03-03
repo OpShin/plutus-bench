@@ -10,7 +10,7 @@ def to_staking_credential(
         pycardano.ScriptHash,
         pycardano.PointerAddress,
         None,
-    ]
+    ],
 ):
     try:
         return SomeStakingCredential(to_staking_hash(sk))
@@ -21,7 +21,7 @@ def to_staking_credential(
 def to_staking_hash(
     sk: Union[
         pycardano.VerificationKeyHash, pycardano.ScriptHash, pycardano.PointerAddress
-    ]
+    ],
 ):
     if isinstance(sk, pycardano.PointerAddress):
         return StakingPtr(sk.slot, sk.tx_index, sk.cert_index)
@@ -109,7 +109,7 @@ def value_to_value(v: pycardano.Value):
 
 
 def to_payment_credential(
-    c: Union[pycardano.VerificationKeyHash, pycardano.ScriptHash]
+    c: Union[pycardano.VerificationKeyHash, pycardano.ScriptHash],
 ):
     if isinstance(c, pycardano.VerificationKeyHash):
         return PubKeyCredential(PubKeyHash(c.payload))

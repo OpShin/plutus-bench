@@ -5,7 +5,7 @@ from .ledger.api_v2 import *
 
 
 def from_staking_credential(
-    sk: Union[SomeStakingCredential, NoStakingCredential]
+    sk: Union[SomeStakingCredential, NoStakingCredential],
 ) -> Union[
     pycardano.VerificationKeyHash,
     pycardano.ScriptHash,
@@ -19,7 +19,7 @@ def from_staking_credential(
 
 
 def from_staking_hash(
-    sk: Union[StakingPtr, StakingHash]
+    sk: Union[StakingPtr, StakingHash],
 ) -> Union[
     pycardano.VerificationKeyHash, pycardano.ScriptHash, pycardano.PointerAddress
 ]:
@@ -38,7 +38,7 @@ def from_pubkeyhash(pkh: PubKeyHash) -> pycardano.VerificationKeyHash:
 
 
 def from_payment_credential(
-    c: Union[PubKeyCredential, ScriptCredential]
+    c: Union[PubKeyCredential, ScriptCredential],
 ) -> Union[pycardano.VerificationKeyHash, pycardano.ScriptHash]:
     if isinstance(c, PubKeyCredential):
         return pycardano.VerificationKeyHash(c.credential_hash)
