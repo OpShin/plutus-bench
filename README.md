@@ -1,6 +1,6 @@
 <div align="center">
 <img alt="A person with the Cardano logo as face, lifting heavy weights" src="plutus-bench.png" width="240" />
-<h1>Plutus-Bench</h1>
+<h1>MockFrost / Plutus-Bench</h1>
 </div>
 
 Test and benchmark Plutus Smart Contracts.
