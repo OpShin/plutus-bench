@@ -59,6 +59,15 @@ MintingPolicyType = Callable[[Any, Any], Any]
 OpshinValidator = Union[ValidatorType, MintingPolicyType]
 
 
+class ExecutionException(Exception):
+    def __init__(self, message: str, logs: List[str]):
+        super().__init__(message)
+        self.logs = logs
+
+    def __str__(self):
+        return f"{super().__str__()}\n{''.join(self.logs)}"
+
+
 def request_wrapper(func):
     def error_wrapper(*args, **kwargs):
         request_response = func(*args, **kwargs)
@@ -322,7 +331,9 @@ class MockFrostApi:
 
             res, (cpu, mem), logs = evaluate_script(invocation)
             if isinstance(res, Exception):
-                raise res
+                raise ExecutionException(
+                    f"Error while evaluating script: {res}", logs=logs
+                )
             key = f"{redeemer.tag.name.lower()}:{redeemer.index}"
             ret[key] = ExecutionUnits(mem, cpu)
         return ret
