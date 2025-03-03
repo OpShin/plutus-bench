@@ -81,7 +81,14 @@ def create_session(
 ) -> uuid.UUID:
     """
     Create a new session.
+    Sets all parameters not specified in protocol and genesis to their default values.
     """
+    protocol_parameters = frozendict.frozendict(protocol_parameters) | dataclasses.asdict(
+        DEFAULT_PROTOCOL_PARAMETERS
+    )
+    genesis_parameters = frozendict.frozendict(genesis_parameters) | dataclasses.asdict(
+        DEFAULT_GENESIS_PARAMETERS
+    )
     session_id = uuid.uuid4()
     SESSIONS[session_id] = Session(
         chain_state=MockFrostApi(
