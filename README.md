@@ -10,7 +10,7 @@ Plutus Bench creates a mock ledger with an arbitrary UTxO set specified by the u
 It then hosts a mock blockfrost API to interact with the ledger, supporting popular off-chain tooling
 like [translucent](https://github.com/antibody-cardano/translucent) and [pycardano](https://pycardano.readthedocs.io/en/latest/).
 
-> Note: Plutus Bench is currently a Work In Progress, and is not yet ready for production use.
+> Note: Plutus Bench is currently in Beta. Expect rough edges!
 
 ### Why Plutus Bench?
 
@@ -43,6 +43,11 @@ Generally the workflow is as follows:
 That's it! You can now interact with the mock ledger using the BlockFrost client.
 
 You may further manipulate the ledger using the `/<session-id>/ledger` endpoints.
+
+## Tutorials and Walkthroughs
+
+- Concrete example and introduction (Reddit): https://www.reddit.com/r/CardanoDevelopers/comments/1j2irs1/introducing_mockfrost_plutusbench_for_endtoend/
+- Walkthrough: How to adapt your off-chain scripts to MockFrost (YouTube): https://youtu.be/B2wZd1xDSMU
 
 ### Similar Projects
 
